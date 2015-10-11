@@ -2,8 +2,11 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:ChangeTracker"
-             StartupUri="MainWindow.xaml">
+             xmlns:vms="clr-namespace:ChangeTracker.ViewModels"
+             StartupUri="MainWindow.xaml"
+             ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
-         
+        <vms:MainViewModel x:Key="mvm"/>
+        <vms:EditorViewModel x:Key="evm"/>
     </Application.Resources>
 </Application>

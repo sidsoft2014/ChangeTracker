@@ -24,7 +24,15 @@ namespace ChangeTracker.ViewModels
 
         public EditorViewModel()
         {
-            SelectMode("web");
+            // Added try-catch to stop app.xaml complaining.
+            try
+            {
+                SelectMode("web");
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         public ObservableCollection<string> Extensions
@@ -305,6 +313,22 @@ namespace ChangeTracker.ViewModels
                 default:
                     break;
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if(disposing)
+            {
+                _extensions = null;
+                _directories = null;
+                _strings = null;
+                _cmdAddFilter = null;
+                _cmdRemoveFilter = null;
+                _cmdSaveFilters = null;
+                _cmdSelectMode = null;
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

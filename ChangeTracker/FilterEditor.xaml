@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChangeTracker"
-        xmlns:vms="clr-namespace:ChangeTracker.ViewModels"
         mc:Ignorable="d"
         Title="Filter Editor"
         Height="400"
@@ -12,11 +11,7 @@
         Width="400"
         MaxWidth="600">
     
-    <Window.Resources>
-        <vms:EditorViewModel x:Key="vm"/>
-    </Window.Resources>
-    
-    <Grid DataContext="{StaticResource vm}">
+    <Grid DataContext="{StaticResource evm}">
         <Grid.RowDefinitions>
             <RowDefinition Height="36"/>
             <RowDefinition Height="1*"/>
