@@ -12,10 +12,12 @@ namespace ChangeTracker
     public static class Globals
     {
         public static SettingsCollection WebSettings = new SettingsCollection { Name = "Web" };
+        public static SettingsCollection CodeSettings = new SettingsCollection { Name = "Code" };
         public static SettingsCollection GeneralSettings = new SettingsCollection { Name = "General" };
 
         public static string SettingsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings");
         public static string SavedWebSettings = Path.Combine(SettingsFolder, "web.json");
+        public static string SavedCodeSettings = Path.Combine(SettingsFolder, "code.json");
         public static string SavedGeneralSettings = Path.Combine(SettingsFolder, "general.json");
 
         public static void Init()

@@ -1,6 +1,7 @@
 ﻿using ChangeTracker.Commands;
 using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -155,6 +156,52 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        internal bool CanSaveFilters
+        {
+            get
+            {
+                switch (_mode)
+                {
+                    case "web":
+                        try
+                        {
+                            return !Globals.WebSettings.FilteredDirectories.SequenceEqual(Directories)
+                                || !Globals.WebSettings.FilteredExtensions.SequenceEqual(Extensions)
+                                || !Globals.WebSettings.FilteredStrings.SequenceEqual(Strings);
+                        }
+                        catch
+                        {
+                            break;
+                        }
+                    case "general":
+                        try
+                        {
+                            return !Globals.GeneralSettings.FilteredDirectories.SequenceEqual(Directories)
+                                || !Globals.GeneralSettings.FilteredExtensions.SequenceEqual(Extensions)
+                                || !Globals.GeneralSettings.FilteredStrings.SequenceEqual(Strings);
+                        }
+                        catch
+                        {
+                            break;
+                        }
+                    case "code":
+                        try
+                        {
+                            return !Globals.CodeSettings.FilteredDirectories.SequenceEqual(Directories)
+                                || !Globals.CodeSettings.FilteredExtensions.SequenceEqual(Extensions)
+                                || !Globals.CodeSettings.FilteredStrings.SequenceEqual(Strings);
+                        }
+                        catch
+                        {
+                            break;
+                        }
+                    default:
+                        break;
+                }
+                return false;
+            }
+        }
+
         internal bool CanAddFilter(string v)
         {
             switch (v.ToLower())
@@ -185,19 +232,23 @@ namespace ChangeTracker.ViewModels
             {
                 case "extensions":
                     {
-                        Extensions.Add(TextBoxExtension);
+                        // Add leading dot if not present.
+                        if (!TextBoxExtension.StartsWith("."))
+                            TextBoxExtension = "." + TextBoxExtension;
+
+                        Extensions.Add(TextBoxExtension.ToLower());
                         TextBoxExtension = string.Empty;
                         break;
                     }
                 case "directories":
                     {
-                        Directories.Add(TextBoxDirectories);
+                        Directories.Add(TextBoxDirectories.ToLower());
                         TextBoxDirectories = string.Empty;
                         break;
                     }
                 case "strings":
                     {
-                        Strings.Add(TextBoxStrings);
+                        Strings.Add(TextBoxStrings.ToLower());
                         TextBoxStrings = string.Empty;
                         break;
                     }

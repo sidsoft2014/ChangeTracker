@@ -6,8 +6,10 @@
         xmlns:local="clr-namespace:ChangeTracker"
         mc:Ignorable="d"
         Title="Filter Editor"
+        MinHeight="350"
         Height="400"
         MaxHeight="600"
+        MinWidth="350"
         Width="400"
         MaxWidth="600">
     
@@ -44,7 +46,7 @@
             </Grid.Resources>
 
             <DockPanel Grid.Column="0" Name="stkExtensions">
-                <TextBlock Text="Extensions" DockPanel.Dock="Top" Style="{StaticResource stylLabels}"/>
+                <TextBlock Text="Extension Filters" DockPanel.Dock="Top" Style="{StaticResource stylLabels}" TextWrapping="Wrap"/>
                 <Button Content="Add" Command="{Binding cmdAddFilter}" CommandParameter="Extensions" DockPanel.Dock="Top"/>
                 <TextBox Name="txtExtension" Text="{Binding TextBoxExtension, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Top"/>
                 <Button Content="Remove" Command="{Binding cmdRemoveFilter}" CommandParameter="Extensions" DockPanel.Dock="Top"/>
@@ -58,7 +60,7 @@
             </DockPanel>
 
             <DockPanel Grid.Column="1" Name="stkDirectories">
-                <TextBlock Text="Directories" DockPanel.Dock="Top" Style="{StaticResource stylLabels}"/>
+                <TextBlock Text="Directory Filters" DockPanel.Dock="Top" Style="{StaticResource stylLabels}" TextWrapping="Wrap"/>
                 <Button Content="Add" Command="{Binding cmdAddFilter}" CommandParameter="Directories" DockPanel.Dock="Top"/>
                 <TextBox Name="txtDirectories" Text="{Binding TextBoxDirectories, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Top"/>
                 <Button Content="Remove" Command="{Binding cmdRemoveFilter}" CommandParameter="Directories" DockPanel.Dock="Top"/>
@@ -72,7 +74,7 @@
             </DockPanel>
 
             <DockPanel Grid.Column="2" Name="stkStrings">
-                <TextBlock Text="Strings" DockPanel.Dock="Top" Style="{StaticResource stylLabels}"/>
+                <TextBlock Text="String Filters" DockPanel.Dock="Top" Style="{StaticResource stylLabels}" TextWrapping="Wrap"/>
                 <Button Content="Add" Command="{Binding cmdAddFilter}" CommandParameter="Strings" DockPanel.Dock="Top"/>
                 <TextBox Name="txtStrings" Text="{Binding TextBoxStrings, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Top"/>
                 <Button Content="Remove" Command="{Binding cmdRemoveFilter}" CommandParameter="Strings" DockPanel.Dock="Top"/>
