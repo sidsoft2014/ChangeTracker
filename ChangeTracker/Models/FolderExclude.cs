@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace ChangeTracker
+namespace ChangeTracker.Models
 {
     public class FolderExclude : INotifyPropertyChanged, IDisposable, IEquatable<FolderExclude>
     {
@@ -24,7 +24,7 @@ namespace ChangeTracker
             }
             set
             {
-                if(value != _exclude)
+                if (value != _exclude)
                 {
                     _exclude = value;
                     OnChanged();

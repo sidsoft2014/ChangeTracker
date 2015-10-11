@@ -1,13 +1,58 @@
-﻿using System;
+﻿using ChangeTracker.ViewModels;
+using System;
 using System.Windows.Input;
 
-namespace ChangeTracker
+namespace ChangeTracker.Commands
 {
+    public sealed class SelectMode : ICommand
+    {
+        private ViewModelBase _viewModel;
+
+        public SelectMode(ViewModelBase viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged;
+
+        public bool CanExecute(object parameter)
+        {
+            return true;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.SelectMode(parameter as string);
+        }
+    }
+
+    public sealed class LaunchFilterEditor : ICommand
+    {
+        private MainViewModel _viewModel;
+
+        public LaunchFilterEditor(MainViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged;
+
+        public bool CanExecute(object parameter)
+        {
+            return true;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.LaunchFilterEditor();
+        }
+    }
+
     public sealed class SelectFolder : ICommand
     {
-        private ViewModel _viewModel;
+        private MainViewModel _viewModel;
 
-        public SelectFolder(ViewModel viewModel)
+        public SelectFolder(MainViewModel viewModel)
         {
             _viewModel = viewModel;
         }
@@ -25,33 +70,11 @@ namespace ChangeTracker
         }
     }
 
-    public sealed class SelectMode : ICommand
-    {
-        private ViewModel _viewModel;
-
-        public SelectMode(ViewModel viewModel)
-        {
-            _viewModel = viewModel;
-        }
-
-        public event EventHandler CanExecuteChanged;
-
-        public bool CanExecute(object parameter)
-        {
-            return true;
-        }
-
-        public void Execute(object parameter)
-        {
-            _viewModel.SelectMode((string)parameter);
-        }
-    }
-
     public sealed class SaveList : ICommand
     {
-        private ViewModel _viewModel;
+        private MainViewModel _viewModel;
 
-        public SaveList(ViewModel viewModel)
+        public SaveList(MainViewModel viewModel)
         {
             _viewModel = viewModel;
         }
@@ -75,9 +98,9 @@ namespace ChangeTracker
 
     public sealed class CopyFiles : ICommand
     {
-        private ViewModel _viewModel;
+        private MainViewModel _viewModel;
 
-        public CopyFiles(ViewModel viewModel)
+        public CopyFiles(MainViewModel viewModel)
         {
             _viewModel = viewModel;
         }
@@ -96,6 +119,80 @@ namespace ChangeTracker
         public void Execute(object parameter)
         {
             _viewModel.CopyFiles();
+        }
+    }
+
+    public sealed class AddFilter : ICommand
+    {
+        private EditorViewModel _viewModel;
+
+        public AddFilter(EditorViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _viewModel.CanAddFilter(parameter as string);
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.AddFilter(parameter as string);
+        }
+    }
+
+    public sealed class RemoveFilter : ICommand
+    {
+        private EditorViewModel _viewModel;
+
+        public RemoveFilter(EditorViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _viewModel.CanRemoveFilter(parameter as string);
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.RemoveFilter(parameter as string);
+        }
+    }
+
+    public sealed class SaveFilters : ICommand
+    {
+        private EditorViewModel _viewModel;
+
+        public SaveFilters(EditorViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged;
+
+        public bool CanExecute(object parameter)
+        {
+            return true;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.SaveFilters();
         }
     }
 }

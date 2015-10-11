@@ -10,6 +10,7 @@ namespace ChangeTracker
         public MainWindow()
         {
             InitializeComponent();
+            Globals.Init();
         }
 
     }

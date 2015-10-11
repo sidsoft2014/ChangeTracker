@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChangeTracker"
+        xmlns:vms="clr-namespace:ChangeTracker.ViewModels"
         mc:Ignorable="d"
         Title="Change Tracker"
         Height="350"
@@ -11,7 +12,7 @@
         Width="525"
         MinWidth="512">
     <Window.Resources>
-        <local:ViewModel x:Key="vm"/>
+        <vms:MainViewModel x:Key="vm"/>
         <Style TargetType="TextBlock" x:Key="txtLabelStyle">
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="Bold"/>
@@ -73,9 +74,10 @@
                             </Style>
                         </StackPanel.Resources>
                         <RadioButton GroupName="grpMode" Content="Web" ToolTip="Exclude files types such as .cs and .vb" Command="{Binding cmdSelectMode}" CommandParameter="Web" IsChecked="True"/>
-                        <RadioButton GroupName="grpMode" Content="All" ToolTip="Track changes to all file types" Command="{Binding cmdSelectMode}" CommandParameter="All"/>
+                        <RadioButton GroupName="grpMode" Content="General" ToolTip="Track changes to all file types" Command="{Binding cmdSelectMode}" CommandParameter="General"/>
                     </StackPanel>
                 </GroupBox>
+                <Button Content="Edit Filters" DockPanel.Dock="Top" MaxWidth="128" Margin="5" Command="{Binding cmdLaunchEditor}"/>
                 <TextBlock Text="Exclude Folders" DockPanel.Dock="Top"/>
                 <ListView Name="lstExcluded" ItemsSource="{Binding SubFolders}" DockPanel.Dock="Top" ToolTip="Select any subdirectories you wish to exclude from watching">
                     <ListView.ItemTemplate>

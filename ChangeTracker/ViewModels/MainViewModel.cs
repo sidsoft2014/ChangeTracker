@@ -1,23 +1,31 @@
-﻿using System;
+﻿using ChangeTracker.Commands;
+using ChangeTracker.Models;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Input;
 using WF = System.Windows.Forms;
 
-namespace ChangeTracker
+namespace ChangeTracker.ViewModels
 {
-    public class ViewModel : INotifyPropertyChanged
+    public class MainViewModel : ViewModelBase
     {
+        // Temporary list of selected directories to exclude from tracking.
         internal HashSet<string> ExcludedDirectorys = new HashSet<string>();
+
         private Watcher watcher;
+        private FilterEditor editor;
         private ICommand _cmdSelectFolder;
         private ICommand _cmdSelectMode;
         private ICommand _cmdSaveList;
         private ICommand _cmdCopyFiles;
+        private ICommand _cmdLaunchEditor;
+        private bool _isEditorLaunched = false;
         private string _watchedFolder;
         private string _selctedFile;
         private string _status;
@@ -27,7 +35,7 @@ namespace ChangeTracker
 
         private delegate void SetUIStringDelegate(string text);
 
-        public ViewModel()
+        public MainViewModel()
         {
             Status = _normalStates[0];
             watcher = new Watcher(this);
@@ -155,7 +163,15 @@ namespace ChangeTracker
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public ICommand cmdLaunchEditor
+        {
+            get
+            {
+                if (_cmdLaunchEditor == null)
+                    _cmdLaunchEditor = new LaunchFilterEditor(this);
+                return _cmdLaunchEditor;
+            }
+        }
 
         internal bool CanSaveList
         {
@@ -207,7 +223,7 @@ namespace ChangeTracker
             }
         }
 
-        internal void SelectMode(string parameter)
+        internal override void SelectMode(string parameter)
         {
             switch (parameter.ToLower())
             {
@@ -215,7 +231,7 @@ namespace ChangeTracker
                     watcher.Mode = Watcher.WatchMode.Web;
                     break;
                 default:
-                    watcher.Mode = Watcher.WatchMode.All;
+                    watcher.Mode = Watcher.WatchMode.General;
                     break;
             }
 
@@ -297,6 +313,23 @@ namespace ChangeTracker
             }
         }
 
+        internal void LaunchFilterEditor()
+        {
+            if (!_isEditorLaunched)
+            {
+                editor = new FilterEditor();
+                editor.Closed += (s, e) => { _isEditorLaunched = false; };
+                _isEditorLaunched = true;
+                editor.Show();
+            }
+            else
+            {
+                if (editor.WindowState == WindowState.Minimized)
+                    editor.WindowState = WindowState.Normal;
+                editor.Focus();
+            }
+        }
+
         internal void AddNewChange(string change)
         {
             if (App.Current == null)
@@ -352,15 +385,6 @@ namespace ChangeTracker
             if (!directory.Parent.Exists)
                 CreateDirectoryStructure(directory.Parent);
             directory.Create();
-        }
-
-        private void OnChanged([CallerMemberName]string p = "")
-        {
-            PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(p));
-            }
         }
 
         private void Folder_PropertyChanged(object sender, PropertyChangedEventArgs e)

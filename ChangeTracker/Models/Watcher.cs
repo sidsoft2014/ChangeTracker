@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ChangeTracker.ViewModels;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,12 +9,9 @@ namespace ChangeTracker
 {
     internal class Watcher
     {
-        private ViewModel vm;
-        private string[] extensCode = { ".cs", ".vb", ".pdb", ".sln", ".csproj", ".vbproj", ".suo" };
-        private string[] tempFilesCode = { "temp", ".dll.config", "~" };
-        private string[] dirsCode = { "obj", "debug", "release" };
+        private MainViewModel vm;
 
-        public Watcher(ViewModel viewModel)
+        public Watcher(MainViewModel viewModel)
         {
             vm = viewModel;
         }
@@ -21,7 +20,7 @@ namespace ChangeTracker
         {
             Web,
             Code,
-            All
+            General
         }
 
         public WatchMode Mode { get; set; }
@@ -50,7 +49,7 @@ namespace ChangeTracker
                                 // Check all files within the directory and subdirectories.
                                 foreach (var file in dInf.GetFiles("*", SearchOption.AllDirectories))
                                 {
-                                    // Check if we want to skip the directory based on the current mode and list of excluded directories.
+                                    // Check if we want to skip the directory based on the current mode and list of user excluded directories.
                                     if (vm.ExcludedDirectorys.Contains(file.DirectoryName))
                                         continue;
                                     else
@@ -58,10 +57,10 @@ namespace ChangeTracker
                                         switch (Mode)
                                         {
                                             case WatchMode.Web:
-                                                if (dirsCode.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
+                                                if (Globals.WebSettings.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
                                                     continue;
                                                 break;
-                                            case WatchMode.All:
+                                            case WatchMode.General:
                                             default:
                                                 break;
                                         }
@@ -76,10 +75,10 @@ namespace ChangeTracker
                                         {
                                             case WatchMode.Web:
                                                 // Check if extension is in list of excluded extensions.
-                                                if (extensCode.Contains(file.Extension.ToLower()))
+                                                if (Globals.WebSettings.FilteredExtensions.Contains(file.Extension.ToLower()))
                                                     continue;
                                                 // Check if filename includes excluded strings.
-                                                foreach (var exculded in tempFilesCode)
+                                                foreach (var exculded in Globals.WebSettings.FilteredStrings)
                                                 {
                                                     if (file.FullName.Contains(exculded))
                                                     {
@@ -89,7 +88,7 @@ namespace ChangeTracker
                                                     }
                                                 }
                                                 break;
-                                            case WatchMode.All:
+                                            case WatchMode.General:
                                             default:
                                                 break;
                                         }
