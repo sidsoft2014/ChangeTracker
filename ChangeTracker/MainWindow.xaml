@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChangeTracker"
         mc:Ignorable="d"
-        Title="MainWindow"
+        Title="Change Tracker"
         Height="350"
         MinHeight="256"
         Width="525"
