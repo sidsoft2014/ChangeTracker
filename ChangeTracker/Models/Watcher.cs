@@ -97,7 +97,7 @@ namespace ChangeTracker
                                         }
 
                                         if (!exclude)
-                                            vm.AddNewChange(file.FullName);
+                                            vm.AddNewChange(file);
                                     }
                                 }
                             }

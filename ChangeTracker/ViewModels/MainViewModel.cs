@@ -30,10 +30,11 @@ namespace ChangeTracker.ViewModels
         private string _selctedFile;
         private string _status;
         private string[] _normalStates = { "Idle", "Watching" };
-        private ObservableCollection<string> _changedFiles = new ObservableCollection<string>();
+        private ObservableCollection<ChangedFile> _changedFiles = new ObservableCollection<ChangedFile>();
         private ObservableCollection<FolderExclude> _subFolders = new ObservableCollection<FolderExclude>();
 
         private delegate void SetUIStringDelegate(string text);
+        private delegate void AddChangeDelegate(ChangedFile change);
 
         public MainViewModel()
         {
@@ -97,7 +98,7 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        public ObservableCollection<string> ChangedFiles
+        public ObservableCollection<ChangedFile> ChangedFiles
         {
             get
             {
@@ -181,6 +182,9 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        /// <summary>
+        /// Selects the folder to watch.
+        /// </summary>
         internal void SelectFolder()
         {
             using (WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog())
@@ -190,6 +194,8 @@ namespace ChangeTracker.ViewModels
                     if (Directory.Exists(Properties.Settings.Default.LastTracked))
                         fbd.SelectedPath = Properties.Settings.Default.LastTracked;
                 }
+
+                fbd.ShowNewFolderButton = false;
                 var dr = fbd.ShowDialog();
 
                 switch (dr)
@@ -223,6 +229,10 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        /// <summary>
+        /// Sets the mode and changes the set of filters used.
+        /// </summary>
+        /// <param name="parameter"></param>
         internal override void SelectMode(string parameter)
         {
             switch (parameter.ToLower())
@@ -238,6 +248,9 @@ namespace ChangeTracker.ViewModels
             SetTemporaryStatusMessage("Mode changed");
         }
 
+        /// <summary>
+        /// Save the list of changed files as a text file.
+        /// </summary>
         internal void SaveList()
         {
             using (WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog())
@@ -248,6 +261,7 @@ namespace ChangeTracker.ViewModels
                         fbd.SelectedPath = Properties.Settings.Default.LastSaved;
                 }
 
+                fbd.ShowNewFolderButton = true;
                 var dr = fbd.ShowDialog();
 
                 switch (dr)
@@ -257,7 +271,7 @@ namespace ChangeTracker.ViewModels
                         string fileName = WatchedFolder.Split('\\').Last() + ".txt";
                         string filePath = Path.Combine(fbd.SelectedPath, fileName);
                         File.Create(filePath).Dispose();
-                        File.AppendAllLines(filePath, ChangedFiles);
+                        File.AppendAllLines(filePath, ChangedFiles.Select(p => p.FullPath));
 
                         SetTemporaryStatusMessage("Saved list of changes");
 
@@ -270,6 +284,9 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        /// <summary>
+        /// Copy the changed files to a selected folder.
+        /// </summary>
         internal void CopyFiles()
         {
             using (WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog())
@@ -279,6 +296,7 @@ namespace ChangeTracker.ViewModels
                     if (Directory.Exists(Properties.Settings.Default.LastCopied))
                         fbd.SelectedPath = Properties.Settings.Default.LastCopied;
                 }
+
                 fbd.ShowNewFolderButton = true;
                 var dr = fbd.ShowDialog();
 
@@ -288,18 +306,15 @@ namespace ChangeTracker.ViewModels
                     case WF.DialogResult.Yes:
                         foreach (var file in ChangedFiles)
                         {
-                            string directory = Path.GetDirectoryName(file.Replace(WatchedFolder, ""));
-                            string fileName = Path.GetFileName(file);
-                            string destination = fbd.SelectedPath + directory;
+                            string directory = file.DirectoryName.Replace(WatchedFolder, "");
+                            string fileName = file.Name;
+                            string destination = Path.Combine(fbd.SelectedPath, directory);
 
                             CreateDirectoryStructure(new DirectoryInfo(destination));
 
                             destination = Path.Combine(destination, fileName);
 
-                            if (File.Exists(destination))
-                                File.Delete(destination);
-
-                            File.Copy(file, destination);
+                            file.Copy(destination, true);
                         }
 
                         SetTemporaryStatusMessage("Files copied");
@@ -313,6 +328,9 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        /// <summary>
+        /// Launch the filter editor in a new window.
+        /// </summary>
         internal void LaunchFilterEditor()
         {
             if (!_isEditorLaunched)
@@ -330,7 +348,11 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        internal void AddNewChange(string change)
+        /// <summary>
+        /// Add a new fileinfo to the list of changed files.
+        /// </summary>
+        /// <param name="change"></param>
+        internal void AddNewChange(ChangedFile change)
         {
             if (App.Current == null)
                 return;
@@ -342,17 +364,17 @@ namespace ChangeTracker.ViewModels
             }
             else
             {
-                SetUIStringDelegate del = new SetUIStringDelegate(AddNewChange);
+                AddChangeDelegate del = new AddChangeDelegate(AddNewChange);
                 System.Windows.Application.Current.Dispatcher.Invoke(del, new object[] { change });
             }
         }
 
         private void SetTemporaryStatusMessage(string message)
         {
-            if (App.Current == null)
+            if (Application.Current == null)
                 return;
 
-            if (System.Windows.Application.Current.Dispatcher.CheckAccess())
+            if (Application.Current.Dispatcher.CheckAccess())
             {
                 if (Status != message)
                 {
@@ -376,7 +398,7 @@ namespace ChangeTracker.ViewModels
             else
             {
                 SetUIStringDelegate del = new SetUIStringDelegate(SetTemporaryStatusMessage);
-                System.Windows.Application.Current.Dispatcher.Invoke(del, new object[] { message });
+                Application.Current.Dispatcher.Invoke(del, new object[] { message });
             }
         }
 

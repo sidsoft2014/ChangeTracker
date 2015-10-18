@@ -52,13 +52,20 @@
                         Command="{Binding cmdCopyFiles}" ToolTip="Copy changed files to a selected directory"/>
                 </StackPanel>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" DockPanel.Dock="Top">
-                    <ListView Name="lstChangedFiles" ItemsSource="{Binding ChangedFiles}">
+                    <DataGrid ItemsSource="{Binding ChangedFiles}" AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding ShortName}" Width="1*"/>
+                            <DataGridTextColumn Header="Folder" Binding="{Binding DirectoryName}" Width="1*"/>
+                            <DataGridTextColumn Header="Type" Binding="{Binding FileExtension}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <!--<ListView Name="lstChangedFiles" ItemsSource="{Binding ChangedFiles}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding}"/>
                             </DataTemplate>
                         </ListView.ItemTemplate>
-                    </ListView>
+                    </ListView>-->
                 </ScrollViewer>
             </DockPanel>
 

@@ -99,6 +99,7 @@
       <DependentUpon>FilterEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="Globals.cs" />
+    <Compile Include="Models\ChangedFile.cs" />
     <Compile Include="Models\FolderExclude.cs" />
     <Compile Include="Models\SettingsCollection.cs" />
     <Compile Include="ViewModels\EditorViewModel.cs" />
