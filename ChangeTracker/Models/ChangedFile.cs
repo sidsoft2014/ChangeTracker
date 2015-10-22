@@ -3,7 +3,7 @@ using System.IO;
 
 namespace ChangeTracker.Models
 {
-    public sealed class ChangedFile : IEquatable<ChangedFile>
+    public sealed class ChangedFile : IEquatable<ChangedFile>, IDisposable
     {
         internal FileInfo File { get; private set; }
 
@@ -167,5 +167,25 @@ namespace ChangeTracker.Models
         {
             return new ChangedFile(file);
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false;
+        public void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    File = null;
+                }
+
+                disposedValue = true;
+            }
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
     }
 }

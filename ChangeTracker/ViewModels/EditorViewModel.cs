@@ -17,7 +17,7 @@ namespace ChangeTracker.ViewModels
         private string _textBoxExtension;
         private string _textBoxTempFiles;
         private string _textBoxDirectories;
-        private string _mode;
+        private string _mode = "web";
         private ICommand _cmdAddFilter;
         private ICommand _cmdRemoveFilter;
         private ICommand _cmdSelectMode;
@@ -25,14 +25,15 @@ namespace ChangeTracker.ViewModels
 
         public EditorViewModel()
         {
-            // Added try-catch to stop app.xaml complaining.
+            // Try clause needed to prevent VS complaining.
             try
             {
+                // May aswell use the method we already have to build initial lists.
                 SelectMode("web");
             }
-            catch
+            finally
             {
-                throw;
+
             }
         }
 
@@ -311,6 +312,10 @@ namespace ChangeTracker.ViewModels
 
         internal override void SelectMode(string parameter)
         {
+            // If for some reason we have a null parameter we may aswell set a value to prevent exceptions later.
+            if (parameter == null)
+                parameter = "web";
+
             _mode = parameter.ToLower();
             switch (_mode)
             {

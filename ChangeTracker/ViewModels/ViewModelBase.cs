@@ -20,7 +20,7 @@ namespace ChangeTracker.ViewModels
         }
 
         #region IDisposable Support
-        private bool disposedValue = false;
+        protected bool disposedValue = false;
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)

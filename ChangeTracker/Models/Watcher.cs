@@ -8,13 +8,31 @@ using System.Threading.Tasks;
 
 namespace ChangeTracker
 {
-    internal class Watcher
+    internal class WatcherEvent : EventArgs
     {
-        private MainViewModel vm;
+        public WatcherEvent(string message)
+        {
+            this.Message = message;
+        }
 
-        public Watcher(MainViewModel viewModel)
+        public string Message { get; private set; }
+    }
+
+    internal class Watcher : IDisposable
+    {
+        private static Watcher _instance;
+        private MainViewModel vm;
+        private DateTime timeStarted = DateTime.UtcNow;
+
+        private Watcher(MainViewModel viewModel)
         {
             vm = viewModel;
+        }
+        public static Watcher Instance(MainViewModel viewModel)
+        {
+            if (_instance == null)
+                _instance = new Watcher(viewModel);
+            return _instance;
         }
 
         public enum WatchMode
@@ -24,15 +42,14 @@ namespace ChangeTracker
             General
         }
 
+        public event EventHandler<WatcherEvent> MessageRaised;
+
         public WatchMode Mode { get; set; }
 
         public void Run()
         {
             Task.Factory.StartNew(async () =>
             {
-                // Get time method was started to use as reference to check file changes.
-                DateTime timeStarted = DateTime.Now.ToUniversalTime();
-
                 while (true)
                 {
                     await Task.Delay(1000);
@@ -101,6 +118,10 @@ namespace ChangeTracker
                                     }
                                 }
                             }
+                            catch(Exception ex)
+                            {
+                                OnMessageRaised("Watcher: " + ex.Message);
+                            }
                             finally
                             {
                                 dInf = null;
@@ -110,5 +131,40 @@ namespace ChangeTracker
                 }
             }, TaskCreationOptions.LongRunning);
         }
+
+        public void ResetTime()
+        {
+            timeStarted = DateTime.UtcNow;
+        }
+
+        private void OnMessageRaised(string message)
+        {
+            EventHandler<WatcherEvent> handler = MessageRaised;
+            if(handler != null)
+            {
+                handler(this, new WatcherEvent(message));
+            }
+        }
+
+        #region IDisposable Support
+        private bool disposedValue = false;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    vm = null;
+                    MessageRaised = null;
+                }
+
+                disposedValue = true;
+            }
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
     }
 }

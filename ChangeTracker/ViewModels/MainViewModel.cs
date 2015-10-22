@@ -18,6 +18,11 @@ namespace ChangeTracker.ViewModels
         // Temporary list of selected directories to exclude from tracking.
         internal HashSet<string> ExcludedDirectorys = new HashSet<string>();
 
+        private bool _isEditorLaunched = false;
+        private string _watchedFolder;
+        private string _selctedFile;
+        private string _status = "Idle";
+        private string[] _normalStates = { "Idle", "Watching" };
         private Watcher watcher;
         private FilterEditor editor;
         private ICommand _cmdSelectFolder;
@@ -25,11 +30,6 @@ namespace ChangeTracker.ViewModels
         private ICommand _cmdSaveList;
         private ICommand _cmdCopyFiles;
         private ICommand _cmdLaunchEditor;
-        private bool _isEditorLaunched = false;
-        private string _watchedFolder;
-        private string _selctedFile;
-        private string _status;
-        private string[] _normalStates = { "Idle", "Watching" };
         private ObservableCollection<ChangedFile> _changedFiles = new ObservableCollection<ChangedFile>();
         private ObservableCollection<FolderExclude> _subFolders = new ObservableCollection<FolderExclude>();
 
@@ -38,8 +38,8 @@ namespace ChangeTracker.ViewModels
 
         public MainViewModel()
         {
-            Status = _normalStates[0];
-            watcher = new Watcher(this);
+            watcher = Watcher.Instance(this);
+            watcher.MessageRaised += Watcher_MessageRaised;
             watcher.Run();
         }
 
@@ -277,6 +277,9 @@ namespace ChangeTracker.ViewModels
 
                         Properties.Settings.Default.LastSaved = fbd.SelectedPath;
                         Properties.Settings.Default.Save();
+
+                        ChangedFiles = new ObservableCollection<ChangedFile>();
+                        watcher.ResetTime();
                         break;
                     default:
                         break;
@@ -306,6 +309,9 @@ namespace ChangeTracker.ViewModels
                     case WF.DialogResult.Yes:
                         foreach (var file in ChangedFiles)
                         {
+                            if (!file.Exists)
+                                continue;
+
                             string directory = file.DirectoryName.Replace(WatchedFolder, "");
                             string fileName = file.Name;
                             string destination = Path.Combine(fbd.SelectedPath, directory);
@@ -321,6 +327,9 @@ namespace ChangeTracker.ViewModels
 
                         Properties.Settings.Default.LastCopied = fbd.SelectedPath;
                         Properties.Settings.Default.Save();
+
+                        ChangedFiles = new ObservableCollection<ChangedFile>();
+                        watcher.ResetTime();
                         break;
                     default:
                         break;
@@ -354,10 +363,10 @@ namespace ChangeTracker.ViewModels
         /// <param name="change"></param>
         internal void AddNewChange(ChangedFile change)
         {
-            if (App.Current == null)
+            if (Application.Current == null)
                 return;
 
-            if (App.Current.Dispatcher.CheckAccess())
+            if (Application.Current.Dispatcher.CheckAccess())
             {
                 if (!ChangedFiles.Contains(change))
                     ChangedFiles.Add(change);
@@ -365,8 +374,13 @@ namespace ChangeTracker.ViewModels
             else
             {
                 AddChangeDelegate del = new AddChangeDelegate(AddNewChange);
-                System.Windows.Application.Current.Dispatcher.Invoke(del, new object[] { change });
+                Application.Current.Dispatcher.Invoke(del, new object[] { change });
             }
+        }
+
+        private void Watcher_MessageRaised(object sender, WatcherEvent e)
+        {
+            SetTemporaryStatusMessage(e.Message);
         }
 
         private void SetTemporaryStatusMessage(string message)
@@ -429,6 +443,27 @@ namespace ChangeTracker.ViewModels
 
                     SetTemporaryStatusMessage("Folder no longer excluded");
                     break;
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+
+                    watcher.Dispose();
+                    _cmdSelectFolder = null;
+                    _cmdSelectMode = null;
+                    _cmdSaveList = null;
+                    _cmdCopyFiles = null;
+                    _cmdLaunchEditor = null;
+                    _changedFiles = null;
+                    _subFolders = null;
+                }
+
+                base.Dispose(disposing);
             }
         }
     }
