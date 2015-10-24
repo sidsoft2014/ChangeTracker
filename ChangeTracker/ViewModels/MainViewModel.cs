@@ -15,6 +15,7 @@ using FileInfo = Pri.LongPath.FileInfo;
 using DirectoryInfo = Pri.LongPath.DirectoryInfo;
 using WF = System.Windows.Forms;
 using System.Diagnostics;
+using System.Windows.Media;
 
 namespace ChangeTracker.ViewModels
 {
@@ -37,6 +38,7 @@ namespace ChangeTracker.ViewModels
         private ICommand _cmdCopyFiles;
         private ICommand _cmdLaunchEditor;
         private ICommand _cmdClearList;
+        private Brush _borderCol = Brushes.Red;
         
         private ConcurrentObservableList<ChangedFile> _changedFiles = new ConcurrentObservableList<ChangedFile>();
         private ConcurrentObservableList<FolderExclude> _subFolders = new ConcurrentObservableList<FolderExclude>();
@@ -49,6 +51,22 @@ namespace ChangeTracker.ViewModels
             watcher = Watcher.Instance(this);
             watcher.MessageRaised += Watcher_MessageRaised;
             watcher.Run();
+        }
+
+        public Brush BorderColor
+        {
+            get
+            {
+                return _borderCol;
+            }
+            set
+            {
+                if(_borderCol != value)
+                {
+                    _borderCol = value;
+                    OnChanged();
+                }
+            }
         }
 
         public string WatchedFolder
@@ -249,6 +267,11 @@ namespace ChangeTracker.ViewModels
 
                             Properties.Settings.Default.LastTracked = WatchedFolder;
                             Properties.Settings.Default.Save();
+                            BorderColor = Brushes.Green;
+                        }
+                        else
+                        {
+                            BorderColor = Brushes.Red;
                         }
                         break;
                     default:

@@ -11,8 +11,8 @@
         MaxHeight="600"
         MinWidth="350"
         Width="400"
-        MaxWidth="600">
-    
+        MaxWidth="600" WindowStyle="ToolWindow">
+
     <Grid DataContext="{StaticResource evm}">
         <Grid.RowDefinitions>
             <RowDefinition Height="36"/>

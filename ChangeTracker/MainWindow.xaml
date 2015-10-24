@@ -4,12 +4,19 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChangeTracker"
+        DataContext="{StaticResource mvm}"
         mc:Ignorable="d"
         Title="Change Tracker"
         Height="350"
         MinHeight="350"
         Width="525"
-        MinWidth="525">
+        MinWidth="525"
+        BorderThickness="2"
+        Padding="5"
+        BorderBrush="{Binding BorderColor}"
+        FontFamily="Franklin Gothic Medium"
+        SnapsToDevicePixels="True"
+        WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <Style TargetType="TextBlock" x:Key="txtLabelStyle">
             <Setter Property="FontSize" Value="14"/>
@@ -18,7 +25,10 @@
             <Setter Property="Margin" Value="5,0"/>
         </Style>
     </Window.Resources>
-    <Grid DataContext="{StaticResource mvm}">
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo Description="Tool to watch directories and track changes."/>
+    </Window.TaskbarItemInfo>
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="36"/>
             <RowDefinition Height="1*"/>
@@ -66,9 +76,9 @@
             </DockPanel>
 
             <TextBlock Text="Options" Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource txtLabelStyle}"/>
-            <DockPanel Grid.Row="1" Grid.Column="1" Margin="5">
-                <GroupBox Header="Filter Mode" Grid.Column="1" Grid.Row="1" BorderBrush="Black" DockPanel.Dock="Top"
-                          ToolTip="Selects the list of filters to use.">
+            <DockPanel Grid.Row="1" Grid.Column="1" Margin="7">
+                <GroupBox Header="Filter Mode" Grid.Column="1" Grid.Row="1" BorderThickness="2" BorderBrush="Black" DockPanel.Dock="Top"
+                          ToolTip="Selects the list of filters to use." Margin="2">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <StackPanel.Resources>
                             <Style TargetType="RadioButton">
@@ -79,8 +89,8 @@
                         <RadioButton GroupName="grpMode" Content="General" ToolTip="Track changes to all file types" Command="{Binding cmdSelectFilterMode}" CommandParameter="General"/>
                     </StackPanel>
                 </GroupBox>
-                <GroupBox Header="Scan Mode" Grid.Column="1" Grid.Row="1" BorderBrush="Black" DockPanel.Dock="Top"
-                          ToolTip="Determines if scanning is done by a single thread or in parallel.">
+                <GroupBox Header="Scan Mode" Grid.Column="1" Grid.Row="1" BorderThickness="2" BorderBrush="Black" DockPanel.Dock="Top"
+                          ToolTip="Determines if scanning is done by a single thread or in parallel." Margin="2">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <StackPanel.Resources>
                             <Style TargetType="RadioButton">
