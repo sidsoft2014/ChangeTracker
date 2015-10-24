@@ -9,6 +9,7 @@ using System.Windows.Input;
 
 namespace ChangeTracker.ViewModels
 {
+    // pragma_warning.cs
     public class EditorViewModel : ViewModelBase
     {
         private ObservableCollection<string> _extensions;
@@ -28,7 +29,7 @@ namespace ChangeTracker.ViewModels
             // Try clause needed to prevent VS complaining.
             try
             {
-                // May aswell use the method we already have to build initial lists.
+                // May as well use the method we already have to build initial lists.
                 SelectFilterMode("web");
             }
             finally

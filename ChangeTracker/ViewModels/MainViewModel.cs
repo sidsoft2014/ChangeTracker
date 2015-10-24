@@ -514,15 +514,18 @@ namespace ChangeTracker.ViewModels
             {
                 if (disposing)
                 {
-
-                    watcher.Dispose();
                     _cmdSelectFolder = null;
                     _cmdSelectScanMode = null;
                     _cmdSaveList = null;
                     _cmdCopyFiles = null;
                     _cmdLaunchEditor = null;
-                    _changedFiles = null;
-                    _subFolders = null;
+
+                    if(watcher != null)
+                        watcher.Dispose();
+                    if(_changedFiles != null)
+                        _changedFiles.Dispose();
+                    if(_subFolders != null)
+                        _subFolders.Dispose();
                 }
 
                 base.Dispose(disposing);

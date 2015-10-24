@@ -127,9 +127,7 @@ namespace ChangeTracker
             foreach (var file in dInf.GetFiles("*", SearchOption.AllDirectories))
             {
                 // Check if we want to skip the directory based on the current mode and list of user excluded directories.
-                if (vm.ExcludedDirectorys.Contains(file.DirectoryName))
-                    continue;
-                else if (sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
+                if (vm.ExcludedDirectorys.Contains(file.DirectoryName) || sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
                     continue;
 
                 // If file was written to or created after start time and is not already in list of changes.
@@ -165,9 +163,9 @@ namespace ChangeTracker
             Parallel.ForEach<FileInfo>(dInf.GetFiles("*", SearchOption.AllDirectories), (file) =>
             {
                 // Check if we want to skip the directory based on the current mode and list of user excluded directories.
-                if (!vm.ExcludedDirectorys.Contains(file.DirectoryName) && !sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
+                if (!vm.ExcludedDirectorys.Contains(file.DirectoryName)
+                && !sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
                 {
-
                     // If file was written to or created after start time and is not already in list of changes.
                     if ((file.LastWriteTimeUtc > timeStarted || file.CreationTimeUtc > timeStarted))
                     {
@@ -176,7 +174,6 @@ namespace ChangeTracker
                         // Check if extension is in list of excluded extensions.
                         if (!sc.FilteredExtensions.Contains(file.Extension.ToLower()))
                         {
-
                             // Check if filename includes excluded strings.
                             foreach (var exculded in sc.FilteredStrings)
                             {
