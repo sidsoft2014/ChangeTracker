@@ -4,11 +4,11 @@ using System.Windows.Input;
 
 namespace ChangeTracker.Commands
 {
-    public sealed class SelectMode : ICommand
+    public sealed class SelectFilterMode : ICommand
     {
         private ViewModelBase _viewModel;
 
-        public SelectMode(ViewModelBase viewModel)
+        public SelectFilterMode(ViewModelBase viewModel)
         {
             _viewModel = viewModel;
         }
@@ -22,7 +22,29 @@ namespace ChangeTracker.Commands
 
         public void Execute(object parameter)
         {
-            _viewModel.SelectMode(parameter as string);
+            _viewModel.SelectFilterMode(parameter as string);
+        }
+    }
+
+    public sealed class SelectScanMode : ICommand
+    {
+        private MainViewModel _viewModel;
+
+        public SelectScanMode(MainViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged;
+
+        public bool CanExecute(object parameter)
+        {
+            return true;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.SelectScanMode(parameter as string);
         }
     }
 

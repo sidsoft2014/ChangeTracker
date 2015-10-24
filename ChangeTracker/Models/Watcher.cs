@@ -38,16 +38,23 @@ namespace ChangeTracker
             return _instance;
         }
 
-        public enum WatchMode
+        public enum FilterMode
         {
             Web,
             Code,
             General
         }
+        public enum ScanMode
+        {
+            Single,
+            Parallel
+        }
 
         public event EventHandler<WatcherEvent> MessageRaised;
 
-        public WatchMode Mode { get; set; }
+        public FilterMode FilteringMode { get; set; }
+
+        public ScanMode ScaningMode { get; set; }
 
         public void Run()
         {
@@ -59,22 +66,22 @@ namespace ChangeTracker
 
                     SettingsCollection sc = null;
 
-                    switch (Mode)
+                    switch (FilteringMode)
                     {
-                        case WatchMode.Web:
+                        case FilterMode.Web:
                             sc = Globals.WebSettings;
                             break;
-                        case WatchMode.Code:
+                        case FilterMode.Code:
                             sc = Globals.CodeSettings;
                             break;
-                        case WatchMode.General:
+                        case FilterMode.General:
                             sc = Globals.GeneralSettings;
                             break;
                         default:
                             break;
                     }
 
-                    // Check we have a directory to watch and settings to check against.
+                    // Check we have a directory to Filter and settings to check against.
                     if (!String.IsNullOrEmpty(vm.WatchedFolder)
                     && vm.WatchedFolder != "None"
                     && sc != null)
@@ -86,42 +93,19 @@ namespace ChangeTracker
 
                             try
                             {
-                                // Check all files within the directory and subdirectories.
-                                foreach (var file in dInf.GetFiles("*", SearchOption.AllDirectories))
+                                switch (ScaningMode)
                                 {
-                                    // Check if we want to skip the directory based on the current mode and list of user excluded directories.
-                                    if (vm.ExcludedDirectorys.Contains(file.DirectoryName))
-                                        continue;
-                                    else if (sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
-                                        continue;
-                                    
-                                    // If file was written to or created after start time and is not already in list of changes.
-                                    if ((file.LastWriteTimeUtc > timeStarted || file.CreationTimeUtc > timeStarted))
-                                    {
-                                        bool exclude = false;
-                                        
-                                        // Check if extension is in list of excluded extensions.
-                                        if (sc.FilteredExtensions.Contains(file.Extension.ToLower()))
-                                            continue;
-
-                                        // Check if filename includes excluded strings.
-                                        foreach (var exculded in sc.FilteredStrings)
-                                        {
-                                            // Convert both comparion strings to lower in order to prevent false negatives.
-                                            if (file.FullName.ToLower().Contains(exculded.ToLower()))
-                                            {
-                                                // Can't use continue or break to skip file here as this is in a sub-loop.
-                                                exclude = true;
-                                                break;
-                                            }
-                                        }
-
-                                        if (!exclude)
-                                            vm.AddNewChange(file);
-                                    }
+                                    case ScanMode.Single:
+                                        Scan(sc, dInf);
+                                        break;
+                                    case ScanMode.Parallel:
+                                        ScanParallel(sc, dInf);
+                                        break;
+                                    default:
+                                        break;
                                 }
                             }
-                            catch(Exception ex)
+                            catch (Exception ex)
                             {
                                 OnMessageRaised("Watcher: " + ex.Message);
                             }
@@ -135,6 +119,82 @@ namespace ChangeTracker
             }, TaskCreationOptions.LongRunning);
         }
 
+        private void Scan(SettingsCollection sc, DirectoryInfo dInf)
+        {
+            // Check all files within the directory and subdirectories.
+            foreach (var file in dInf.GetFiles("*", SearchOption.AllDirectories))
+            {
+                // Check if we want to skip the directory based on the current mode and list of user excluded directories.
+                if (vm.ExcludedDirectorys.Contains(file.DirectoryName))
+                    continue;
+                else if (sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
+                    continue;
+
+                // If file was written to or created after start time and is not already in list of changes.
+                if ((file.LastWriteTimeUtc > timeStarted || file.CreationTimeUtc > timeStarted))
+                {
+                    bool exclude = false;
+
+                    // Check if extension is in list of excluded extensions.
+                    if (sc.FilteredExtensions.Contains(file.Extension.ToLower()))
+                        continue;
+
+                    // Check if filename includes excluded strings.
+                    foreach (var exculded in sc.FilteredStrings)
+                    {
+                        // Convert both comparion strings to lower in order to prevent false negatives.
+                        if (file.FullName.ToLower().Contains(exculded.ToLower()))
+                        {
+                            // Can't use continue or break to skip file here as this is in a sub-loop.
+                            exclude = true;
+                            break;
+                        }
+                    }
+
+                    if (!exclude)
+                        vm.AddNewChange(file);
+                }
+            }
+        }
+
+        private void ScanParallel(SettingsCollection sc, DirectoryInfo dInf)
+        {
+            // Check all files within the directory and subdirectories.
+            Parallel.ForEach<FileInfo>(dInf.GetFiles("*", SearchOption.AllDirectories), (file) =>
+            {
+                // Check if we want to skip the directory based on the current mode and list of user excluded directories.
+                if (!vm.ExcludedDirectorys.Contains(file.DirectoryName) && !sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
+                {
+
+                    // If file was written to or created after start time and is not already in list of changes.
+                    if ((file.LastWriteTimeUtc > timeStarted || file.CreationTimeUtc > timeStarted))
+                    {
+                        bool exclude = false;
+
+                        // Check if extension is in list of excluded extensions.
+                        if (!sc.FilteredExtensions.Contains(file.Extension.ToLower()))
+                        {
+
+                            // Check if filename includes excluded strings.
+                            foreach (var exculded in sc.FilteredStrings)
+                            {
+                                // Convert both comparion strings to lower in order to prevent false negatives.
+                                if (file.FullName.ToLower().Contains(exculded.ToLower()))
+                                {
+                                    // Can't use continue or break to skip file here as this is in a sub-loop.
+                                    exclude = true;
+                                    break;
+                                }
+                            }
+
+                            if (!exclude)
+                                vm.AddNewChange(file);
+                        }
+                    }
+                }
+            });
+        }
+
         public void ResetTime()
         {
             timeStarted = DateTime.UtcNow;
@@ -143,7 +203,7 @@ namespace ChangeTracker
         private void OnMessageRaised(string message)
         {
             EventHandler<WatcherEvent> handler = MessageRaised;
-            if(handler != null)
+            if (handler != null)
             {
                 handler(this, new WatcherEvent(message));
             }

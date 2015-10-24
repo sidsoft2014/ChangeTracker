@@ -27,9 +27,10 @@
 
         <Border BorderThickness="2" CornerRadius="5" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="5,2">
             <StackPanel Grid.Row="0" Orientation="Horizontal">
-                <TextBlock Text="Directory To Watch:" VerticalAlignment="Center" />
+                <TextBlock Text="Directory To Filter:" VerticalAlignment="Center" />
                 <TextBlock Name="txtWatchedFolder" MinWidth="256" Margin="5,3,5,3" Text="{Binding WatchedFolder}" />
-                <Button Name="btnSelectFolder" Content="Select" Command="{Binding cmdSelectFolder}" />
+                <Button Name="btnSelectFolder" Content="Select" Command="{Binding cmdSelectFolder}"
+                        ToolTip="Select the directory to Filter for changes."/>
             </StackPanel>
         </Border>
 
@@ -59,27 +60,33 @@
                             <DataGridTextColumn Header="Type" Binding="{Binding FileExtension}" Width="80"/>
                         </DataGrid.Columns>
                     </DataGrid>
-                    <!--<ListView Name="lstChangedFiles" ItemsSource="{Binding ChangedFiles}">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}"/>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>-->
                 </ScrollViewer>
             </DockPanel>
 
             <TextBlock Text="Options" Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource txtLabelStyle}"/>
             <DockPanel Grid.Row="1" Grid.Column="1" Margin="5">
-                <GroupBox Header="Mode" Grid.Column="1" Grid.Row="1" BorderBrush="Black" DockPanel.Dock="Top">
+                <GroupBox Header="Filter Mode" Grid.Column="1" Grid.Row="1" BorderBrush="Black" DockPanel.Dock="Top"
+                          ToolTip="Selects the list of filters to use.">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <StackPanel.Resources>
                             <Style TargetType="RadioButton">
                                 <Setter Property="Margin" Value="5,2"/>
                             </Style>
                         </StackPanel.Resources>
-                        <RadioButton GroupName="grpMode" Content="Web" ToolTip="Exclude files types such as .cs and .vb" Command="{Binding cmdSelectMode}" CommandParameter="Web" IsChecked="True"/>
-                        <RadioButton GroupName="grpMode" Content="General" ToolTip="Track changes to all file types" Command="{Binding cmdSelectMode}" CommandParameter="General"/>
+                        <RadioButton GroupName="grpMode" Content="Web" ToolTip="Exclude files types such as .cs and .vb" Command="{Binding cmdSelectFilterMode}" CommandParameter="Web" IsChecked="True"/>
+                        <RadioButton GroupName="grpMode" Content="General" ToolTip="Track changes to all file types" Command="{Binding cmdSelectFilterMode}" CommandParameter="General"/>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Header="Scan Mode" Grid.Column="1" Grid.Row="1" BorderBrush="Black" DockPanel.Dock="Top"
+                          ToolTip="Determines if scanning is done by a single thread or in parallel.">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <StackPanel.Resources>
+                            <Style TargetType="RadioButton">
+                                <Setter Property="Margin" Value="5,2"/>
+                            </Style>
+                        </StackPanel.Resources>
+                        <RadioButton GroupName="grpScanMode" Content="Single" ToolTip="Scan using a single thread. (Lower max CPU usage, longer scan time)" Command="{Binding cmdSelectScanMode}" CommandParameter="single" IsChecked="True"/>
+                        <RadioButton GroupName="grpScanMode" Content="Multi" ToolTip="Scan using multiple threads. (Higher CPU usage, shorter scan time)" Command="{Binding cmdSelectScanMode}" CommandParameter="multi"/>
                     </StackPanel>
                 </GroupBox>
                 <Button Content="Edit Filters" DockPanel.Dock="Top" MaxWidth="128" Margin="5" Command="{Binding cmdLaunchEditor}"/>

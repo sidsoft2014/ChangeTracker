@@ -71,9 +71,9 @@ namespace ChangeTracker
             if (GeneralSettings == null)
                 GeneralSettings = new SettingsCollection { Name = "General" };
 
-            GeneralSettings.FilteredDirectories = new List<string>();
-            GeneralSettings.FilteredExtensions = new List<string>();
-            GeneralSettings.FilteredStrings = new List<string>();
+            GeneralSettings.FilteredDirectories = new HashSet<string>();
+            GeneralSettings.FilteredExtensions = new HashSet<string>();
+            GeneralSettings.FilteredStrings = new HashSet<string>();
         }
 
         private static void PopulateBaseWebFilters()
@@ -81,7 +81,7 @@ namespace ChangeTracker
             if (WebSettings == null)
                 WebSettings = new SettingsCollection { Name = "Web" };
 
-            WebSettings.FilteredExtensions = new List<string>
+            WebSettings.FilteredExtensions = new HashSet<string>
                 {
                     ".cs",
                     ".vb",
@@ -89,15 +89,16 @@ namespace ChangeTracker
                     ".sln",
                     ".csproj",
                     ".vbproj",
-                    ".suo"
+                    ".suo",
+                    ".sync",
+                    ".temp",
+                    ".tmp"
                 };
-            WebSettings.FilteredStrings = new List<string>
+            WebSettings.FilteredStrings = new HashSet<string>
                 {
-                    "temp",
-                    ".dll.config",
-                    "~"
+                    ".dll.config"
                 };
-            WebSettings.FilteredDirectories = new List<string>
+            WebSettings.FilteredDirectories = new HashSet<string>
                 {
                     "obj",
                     "debug",

@@ -6,7 +6,7 @@ namespace ChangeTracker.ViewModels
 {
     public abstract class ViewModelBase : INotifyPropertyChanged, IDisposable
     {
-        internal abstract void SelectMode(string parameter);
+        internal abstract void SelectFilterMode(string parameter);
 
         public event PropertyChangedEventHandler PropertyChanged;
 

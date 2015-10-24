@@ -29,7 +29,7 @@ namespace ChangeTracker.ViewModels
             try
             {
                 // May aswell use the method we already have to build initial lists.
-                SelectMode("web");
+                SelectFilterMode("web");
             }
             finally
             {
@@ -143,7 +143,7 @@ namespace ChangeTracker.ViewModels
             get
             {
                 if (_cmdSelectMode == null)
-                    _cmdSelectMode = new SelectMode(this);
+                    _cmdSelectMode = new SelectFilterMode(this);
                 return _cmdSelectMode;
             }
         }
@@ -310,7 +310,7 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        internal override void SelectMode(string parameter)
+        internal override void SelectFilterMode(string parameter)
         {
             // If for some reason we have a null parameter we may aswell set a value to prevent exceptions later.
             if (parameter == null)
@@ -345,9 +345,9 @@ namespace ChangeTracker.ViewModels
                         if (Globals.WebSettings == null)
                             Globals.WebSettings = new Models.SettingsCollection { Name = "Web" };
 
-                        Globals.WebSettings.FilteredDirectories = new List<string>(Directories);
-                        Globals.WebSettings.FilteredExtensions = new List<string>(Extensions);
-                        Globals.WebSettings.FilteredStrings = new List<string>(Strings);
+                        Globals.WebSettings.FilteredDirectories = new HashSet<string>(Directories);
+                        Globals.WebSettings.FilteredExtensions = new HashSet<string>(Extensions);
+                        Globals.WebSettings.FilteredStrings = new HashSet<string>(Strings);
 
                         string json = JsonConvert.SerializeObject(Globals.WebSettings);
                         File.WriteAllText(Globals.SavedWebSettings, json);
@@ -358,9 +358,9 @@ namespace ChangeTracker.ViewModels
                         if (Globals.GeneralSettings == null)
                             Globals.GeneralSettings = new Models.SettingsCollection { Name = "General" };
 
-                        Globals.GeneralSettings.FilteredDirectories = new List<string>(Directories);
-                        Globals.GeneralSettings.FilteredExtensions = new List<string>(Extensions);
-                        Globals.GeneralSettings.FilteredStrings = new List<string>(Strings);
+                        Globals.GeneralSettings.FilteredDirectories = new HashSet<string>(Directories);
+                        Globals.GeneralSettings.FilteredExtensions = new HashSet<string>(Extensions);
+                        Globals.GeneralSettings.FilteredStrings = new HashSet<string>(Strings);
 
                         string json = JsonConvert.SerializeObject(Globals.GeneralSettings);
                         File.WriteAllText(Globals.SavedGeneralSettings, json);

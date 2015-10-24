@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using SidSoft.MultiThreading.Collections;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
@@ -13,6 +14,7 @@ using File = Pri.LongPath.File;
 using FileInfo = Pri.LongPath.FileInfo;
 using DirectoryInfo = Pri.LongPath.DirectoryInfo;
 using WF = System.Windows.Forms;
+using System.Diagnostics;
 
 namespace ChangeTracker.ViewModels
 {
@@ -29,12 +31,14 @@ namespace ChangeTracker.ViewModels
         private Watcher watcher;
         private FilterEditor editor;
         private ICommand _cmdSelectFolder;
-        private ICommand _cmdSelectMode;
+        private ICommand _cmdSelectScanMode;
+        private ICommand _cmdSelectFilterMode;
         private ICommand _cmdSaveList;
         private ICommand _cmdCopyFiles;
         private ICommand _cmdLaunchEditor;
-        private ObservableCollection<ChangedFile> _changedFiles = new ObservableCollection<ChangedFile>();
-        private ObservableCollection<FolderExclude> _subFolders = new ObservableCollection<FolderExclude>();
+        
+        private ConcurrentObservableList<ChangedFile> _changedFiles = new ConcurrentObservableList<ChangedFile>();
+        private ConcurrentObservableList<FolderExclude> _subFolders = new ConcurrentObservableList<FolderExclude>();
 
         private delegate void SetUIStringDelegate(string text);
         private delegate void AddChangeDelegate(ChangedFile change);
@@ -101,7 +105,7 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        public ObservableCollection<ChangedFile> ChangedFiles
+        public ConcurrentObservableList<ChangedFile> ChangedFiles
         {
             get
             {
@@ -114,7 +118,7 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        public ObservableCollection<FolderExclude> SubFolders
+        public ConcurrentObservableList<FolderExclude> SubFolders
         {
             get
             {
@@ -137,13 +141,23 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        public ICommand cmdSelectMode
+        public ICommand cmdSelectScanMode
         {
             get
             {
-                if (_cmdSelectMode == null)
-                    _cmdSelectMode = new SelectMode(this);
-                return _cmdSelectMode;
+                if (_cmdSelectScanMode == null)
+                    _cmdSelectScanMode = new SelectScanMode(this);
+                return _cmdSelectScanMode;
+            }
+        }
+
+        public ICommand cmdSelectFilterMode
+        {
+            get
+            {
+                if (_cmdSelectFilterMode == null)
+                    _cmdSelectFilterMode = new SelectFilterMode(this);
+                return _cmdSelectFilterMode;
             }
         }
 
@@ -186,7 +200,7 @@ namespace ChangeTracker.ViewModels
         }
 
         /// <summary>
-        /// Selects the folder to watch.
+        /// Selects the folder to Filter.
         /// </summary>
         internal void SelectFolder()
         {
@@ -233,18 +247,37 @@ namespace ChangeTracker.ViewModels
         }
 
         /// <summary>
-        /// Sets the mode and changes the set of filters used.
+        /// Sets the Filter mode and changes the set of filters used.
         /// </summary>
         /// <param name="parameter"></param>
-        internal override void SelectMode(string parameter)
+        internal override void SelectFilterMode(string parameter)
         {
             switch (parameter.ToLower())
             {
                 case "web":
-                    watcher.Mode = Watcher.WatchMode.Web;
+                    watcher.FilteringMode = Watcher.FilterMode.Web;
                     break;
                 default:
-                    watcher.Mode = Watcher.WatchMode.General;
+                    watcher.FilteringMode = Watcher.FilterMode.General;
+                    break;
+            }
+
+            SetTemporaryStatusMessage("Filter Mode Changed");
+        }
+
+        /// <summary>
+        /// Determines if scanning is done by a single thread or in parallel.
+        /// </summary>
+        /// <param name="parameter"></param>
+        internal void SelectScanMode(string parameter)
+        {
+            switch (parameter.ToLower())
+            {
+                case "multi":
+                    watcher.ScaningMode = Watcher.ScanMode.Parallel;
+                    break;
+                default:
+                    watcher.ScaningMode = Watcher.ScanMode.Single;
                     break;
             }
 
@@ -276,13 +309,8 @@ namespace ChangeTracker.ViewModels
                         File.Create(filePath).Dispose();
                         File.AppendAllLines(filePath, ChangedFiles.Select(p => p.FullPath));
 
-                        SetTemporaryStatusMessage("Saved list of changes");
+                        ResetAndLaunch("Files List Created", fbd.SelectedPath);
 
-                        Properties.Settings.Default.LastSaved = fbd.SelectedPath;
-                        Properties.Settings.Default.Save();
-
-                        ChangedFiles = new ObservableCollection<ChangedFile>();
-                        watcher.ResetTime();
                         break;
                     default:
                         break;
@@ -310,6 +338,7 @@ namespace ChangeTracker.ViewModels
                 {
                     case WF.DialogResult.OK:
                     case WF.DialogResult.Yes:
+                        string folder = fbd.SelectedPath;
                         foreach (var file in ChangedFiles)
                         {
                             if (!file.Exists)
@@ -317,7 +346,7 @@ namespace ChangeTracker.ViewModels
 
                             string directory = file.FullPath.Replace(WatchedFolder, "").TrimStart('\\');
                             string fileName = file.Name;
-                            string destination = Path.Combine(@"\\?\",fbd.SelectedPath, directory);
+                            string destination = Path.Combine(@"\\?\", folder, directory);
 
                             CreateDirectoryStructure(new DirectoryInfo(destination));
 
@@ -326,12 +355,7 @@ namespace ChangeTracker.ViewModels
                             file.Copy(destination, true);
                         }
 
-                        Properties.Settings.Default.LastCopied = fbd.SelectedPath;
-                        Properties.Settings.Default.Save();
-
-                        ChangedFiles = new ObservableCollection<ChangedFile>();
-                        watcher.ResetTime();
-                        SetTemporaryStatusMessage("Files copied");
+                        ResetAndLaunch("Files Copied", folder);
 
                         break;
                     default:
@@ -426,6 +450,18 @@ namespace ChangeTracker.ViewModels
             directory.Create();
         }
 
+        private void ResetAndLaunch(string result, string destination)
+        {
+            Properties.Settings.Default.LastCopied = destination;
+            Properties.Settings.Default.Save();
+
+            ChangedFiles = new ConcurrentObservableList<ChangedFile>();
+            watcher.ResetTime();
+
+            SetTemporaryStatusMessage(result);
+            Process.Start(destination);
+        }
+
         private void Folder_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             FolderExclude folder = sender as FolderExclude;
@@ -458,7 +494,7 @@ namespace ChangeTracker.ViewModels
 
                     watcher.Dispose();
                     _cmdSelectFolder = null;
-                    _cmdSelectMode = null;
+                    _cmdSelectScanMode = null;
                     _cmdSaveList = null;
                     _cmdCopyFiles = null;
                     _cmdLaunchEditor = null;

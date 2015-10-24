@@ -7,9 +7,9 @@ namespace ChangeTracker.Models
     public sealed class SettingsCollection : IDisposable
     {
         public string Name { get; set; }
-        public List<string> FilteredExtensions { get; set; }
-        public List<string> FilteredDirectories { get; set; }
-        public List<string> FilteredStrings { get; set; }
+        public HashSet<string> FilteredExtensions { get; set; }
+        public HashSet<string> FilteredDirectories { get; set; }
+        public HashSet<string> FilteredStrings { get; set; }
 
         #region IDisposable Support
         private bool disposedValue = false;
