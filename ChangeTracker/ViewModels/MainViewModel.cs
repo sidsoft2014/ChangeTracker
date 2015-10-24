@@ -36,6 +36,7 @@ namespace ChangeTracker.ViewModels
         private ICommand _cmdSaveList;
         private ICommand _cmdCopyFiles;
         private ICommand _cmdLaunchEditor;
+        private ICommand _cmdClearList;
         
         private ConcurrentObservableList<ChangedFile> _changedFiles = new ConcurrentObservableList<ChangedFile>();
         private ConcurrentObservableList<FolderExclude> _subFolders = new ConcurrentObservableList<FolderExclude>();
@@ -181,6 +182,16 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        public ICommand cmdClearList
+        {
+            get
+            {
+                if (_cmdClearList == null)
+                    _cmdClearList = new ClearList(this);
+                return _cmdClearList;
+            }
+        }
+
         public ICommand cmdLaunchEditor
         {
             get
@@ -291,10 +302,10 @@ namespace ChangeTracker.ViewModels
         {
             using (WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog())
             {
-                if (!string.IsNullOrEmpty(Properties.Settings.Default.LastSaved))
+                if (!string.IsNullOrEmpty(Properties.Settings.Default.LastCopied))
                 {
-                    if (Directory.Exists(Properties.Settings.Default.LastSaved))
-                        fbd.SelectedPath = Properties.Settings.Default.LastSaved;
+                    if (Directory.Exists(Properties.Settings.Default.LastCopied))
+                        fbd.SelectedPath = Properties.Settings.Default.LastCopied;
                 }
 
                 fbd.ShowNewFolderButton = true;
@@ -362,6 +373,19 @@ namespace ChangeTracker.ViewModels
                         break;
                 }
             }
+        }
+
+        internal void ClearList(bool affirmed = false)
+        {
+            if(!affirmed)
+            {
+                WF.DialogResult dlg = WF.MessageBox.Show("Are you sure you want to clear this list?", "Clear List?", WF.MessageBoxButtons.YesNo);
+                if (dlg == WF.DialogResult.No)
+                    return;
+            }
+
+            ChangedFiles = new ConcurrentObservableList<ChangedFile>();
+            watcher.ResetTime();
         }
 
         /// <summary>
@@ -455,8 +479,7 @@ namespace ChangeTracker.ViewModels
             Properties.Settings.Default.LastCopied = destination;
             Properties.Settings.Default.Save();
 
-            ChangedFiles = new ConcurrentObservableList<ChangedFile>();
-            watcher.ResetTime();
+            ClearList(true);
 
             SetTemporaryStatusMessage(result);
             Process.Start(destination);

@@ -38,18 +38,6 @@ namespace ChangeTracker.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string LastSaved {
-            get {
-                return ((string)(this["LastSaved"]));
-            }
-            set {
-                this["LastSaved"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string LastCopied {
             get {
                 return ((string)(this["LastCopied"]));

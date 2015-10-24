@@ -62,10 +62,12 @@ namespace ChangeTracker
             {
                 while (true)
                 {
-                    await Task.Delay(1000);
+                    // Alter delay based on scaning mode.
+                    int delay = ScaningMode == ScanMode.Single ? 1000 : 2000;
+                    await Task.Delay(delay);
 
+                    // Get current filter mode.
                     SettingsCollection sc = null;
-
                     switch (FilteringMode)
                     {
                         case FilterMode.Web:
@@ -81,7 +83,7 @@ namespace ChangeTracker
                             break;
                     }
 
-                    // Check we have a directory to Filter and settings to check against.
+                    // Check we have a directory to watch and settings to check against.
                     if (!String.IsNullOrEmpty(vm.WatchedFolder)
                     && vm.WatchedFolder != "None"
                     && sc != null)

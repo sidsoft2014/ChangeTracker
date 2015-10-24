@@ -144,6 +144,32 @@ namespace ChangeTracker.Commands
         }
     }
 
+    public sealed class ClearList : ICommand
+    {
+        private MainViewModel _viewModel;
+
+        public ClearList(MainViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _viewModel.ChangedFiles.Count > 0;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.ClearList();
+        }
+    }
+
     public sealed class AddFilter : ICommand
     {
         private EditorViewModel _viewModel;

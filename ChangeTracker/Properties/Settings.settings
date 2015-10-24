@@ -5,9 +5,6 @@
     <Setting Name="LastTracked" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="LastSaved" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
     <Setting Name="LastCopied" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
