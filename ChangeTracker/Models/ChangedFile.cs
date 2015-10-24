@@ -1,5 +1,17 @@
 ﻿using System;
-using System.IO;
+using Directory = Pri.LongPath.Directory;
+using File = Pri.LongPath.File;
+using FileInfo = Pri.LongPath.FileInfo;
+using DirectoryInfo = Pri.LongPath.DirectoryInfo;
+using Path = Pri.LongPath.Path;
+using IOException = System.IO.IOException;
+using SeekOrigin = System.IO.SeekOrigin;
+using FileOptions = System.IO.FileOptions;
+using FileAttributes = System.IO.FileAttributes;
+using FileMode = System.IO.FileMode;
+using FileAccess = System.IO.FileAccess;
+using FileNotFoundException = System.IO.FileNotFoundException;
+using DirectoryNotFoundException = System.IO.DirectoryNotFoundException;
 
 namespace ChangeTracker.Models
 {
@@ -12,6 +24,9 @@ namespace ChangeTracker.Models
             File = file;
         }
 
+        /// <summary>
+        /// Gets the absolute path of the file.
+        /// </summary>
         public string FullPath
         {
             get
@@ -128,8 +143,8 @@ namespace ChangeTracker.Models
         /// </summary>
         public void Delete()
         {
-            if (System.IO.File.Exists(this.FullPath))
-                System.IO.File.Delete(this.FullPath);
+            if (File.Exists)
+                File.Delete();
         }
 
         /// <summary>
@@ -139,7 +154,8 @@ namespace ChangeTracker.Models
         /// <param name="overwrite">If true will overwrite an existing file if one exists.</param>
         public void Copy(string destination, bool overwrite)
         {
-            System.IO.File.Copy(FullPath, destination, overwrite);
+            string source = FullPath.Replace(@"\\?\", "");
+            File.CopyTo(destination, overwrite);
         }
 
         public bool Equals(ChangedFile other)

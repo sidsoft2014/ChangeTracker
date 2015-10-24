@@ -9,6 +9,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using File = Pri.LongPath.File;
+using FileInfo = Pri.LongPath.FileInfo;
+using DirectoryInfo = Pri.LongPath.DirectoryInfo;
 using WF = System.Windows.Forms;
 
 namespace ChangeTracker.ViewModels
@@ -312,9 +315,9 @@ namespace ChangeTracker.ViewModels
                             if (!file.Exists)
                                 continue;
 
-                            string directory = file.DirectoryName.Replace(WatchedFolder, "");
+                            string directory = file.FullPath.Replace(WatchedFolder, "").TrimStart('\\');
                             string fileName = file.Name;
-                            string destination = Path.Combine(fbd.SelectedPath, directory);
+                            string destination = Path.Combine(@"\\?\",fbd.SelectedPath, directory);
 
                             CreateDirectoryStructure(new DirectoryInfo(destination));
 
@@ -323,13 +326,13 @@ namespace ChangeTracker.ViewModels
                             file.Copy(destination, true);
                         }
 
-                        SetTemporaryStatusMessage("Files copied");
-
                         Properties.Settings.Default.LastCopied = fbd.SelectedPath;
                         Properties.Settings.Default.Save();
 
                         ChangedFiles = new ObservableCollection<ChangedFile>();
                         watcher.ResetTime();
+                        SetTemporaryStatusMessage("Files copied");
+
                         break;
                     default:
                         break;

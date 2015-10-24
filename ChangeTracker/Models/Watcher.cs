@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using File = Pri.LongPath.File;
+using FileInfo = Pri.LongPath.FileInfo;
+using DirectoryInfo = Pri.LongPath.DirectoryInfo;
 
 namespace ChangeTracker
 {
