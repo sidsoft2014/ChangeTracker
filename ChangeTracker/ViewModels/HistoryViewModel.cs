@@ -20,6 +20,10 @@ namespace ChangeTracker.ViewModels
         private string _selectedFileName;
         private ICommand _cmdClearDay;
         private ICommand _cmdClearAll;
+        private string _status;
+        private string _selectedDate;
+
+        private delegate void SetUIStringDelegate(string text);
 
         public HistoryViewModel()
         {
@@ -79,6 +83,13 @@ namespace ChangeTracker.ViewModels
             OnChanged("TotalJobs");
             OnChanged("TotalTime");
             OnChanged("TotalChanges");
+
+            if (Records == null || Records.Count == 0)
+                SelectedDate = "No log loaded";
+            else
+            {
+                SelectedDate = Records.First().Start.ToShortDateString();
+            }
         }
 
         public HistoryRecord SelectedRecord
@@ -92,6 +103,24 @@ namespace ChangeTracker.ViewModels
                 if (value != _selectedRecord)
                 {
                     _selectedRecord = value;
+                    OnChanged();
+                }
+            }
+        }
+
+        public string SelectedDate
+        {
+            get
+            {
+                if (Records == null)
+                    return "No log loaded";
+                return _selectedDate;
+            }
+            private set
+            {
+                if(value != _selectedDate)
+                {
+                    _selectedDate = value;
                     OnChanged();
                 }
             }
@@ -163,6 +192,24 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        public string Status
+        {
+            get
+            {
+                if (_status == null)
+                    return string.Empty;
+                return _status;
+            }
+            private set
+            {
+                if(value != _status)
+                {
+                    _status = value;
+                    OnChanged();
+                }
+            }
+        }
+
         public ICommand cmdClearDay
         {
             get
@@ -204,6 +251,8 @@ namespace ChangeTracker.ViewModels
                 Records = new List<HistoryRecord>();
                 file.Delete();
                 GetHistoryLogs();
+
+                SetTemporaryStatusMessage("Day erased from logs.");
             }
 
         }
@@ -231,11 +280,44 @@ namespace ChangeTracker.ViewModels
             }
 
             GetHistoryLogs();
+            SetTemporaryStatusMessage("All history cleared.");
         }
 
         internal override void SelectFilterMode(string parameter)
         {
             
+        }
+
+        private void SetTemporaryStatusMessage(string message)
+        {
+            if (System.Windows.Application.Current == null)
+                return;
+
+            if (System.Windows.Application.Current.Dispatcher.CheckAccess())
+            {
+                if (Status != message)
+                {
+                    Status = message;
+
+                    if (!string.IsNullOrEmpty(message))
+                    {
+                        System.Timers.Timer timer = new System.Timers.Timer(2000);
+
+                        timer.AutoReset = false;
+                        timer.Elapsed += (s, e) =>
+                        {
+                            SetTemporaryStatusMessage(string.Empty);
+                            timer.Dispose();
+                        };
+                        timer.Start();
+                    }
+                }
+            }
+            else
+            {
+                SetUIStringDelegate del = new SetUIStringDelegate(SetTemporaryStatusMessage);
+                System.Windows.Application.Current.Dispatcher.Invoke(del, new object[] { message });
+            }
         }
 
         private bool GetDialogResult(string message, string title)

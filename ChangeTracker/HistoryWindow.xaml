@@ -26,7 +26,8 @@
                 </Style>
             </StackPanel.Resources>
             <ComboBox Name="cbxHistory" Width="128" HorizontalAlignment="Left" Margin="10,5" ItemsSource="{Binding XmlFiles.Keys}"
-                      SelectedItem="{Binding SelectedFileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                      SelectedItem="{Binding SelectedFileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      VerticalContentAlignment="Center"/>
             <Button Content="Clear Day" Background="Yellow" FontWeight="Bold"
                     Command="{Binding cmdClearDay}" ToolTip="Clear the selected day from the history logs."/>
             <Button Content="Clear History" Background="Red" FontWeight="Bold"
@@ -49,13 +50,13 @@
                                        HorizontalAlignment="Center" />
                             </DataGridTextColumn.Header>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding Start}" Width="150">
+                        <DataGridTextColumn Binding="{Binding Start, Converter={StaticResource TimeFromDateTime}}" Width="150">
                             <DataGridTextColumn.Header>
                                 <TextBlock TextWrapping="Wrap" Text="Start Time"
                                        HorizontalAlignment="Center" />
                             </DataGridTextColumn.Header>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding End}" Width="150">
+                        <DataGridTextColumn Binding="{Binding End, Converter={StaticResource TimeFromDateTime}}" Width="150">
                             <DataGridTextColumn.Header>
                                 <TextBlock TextWrapping="Wrap" Text="End Time"
                                        HorizontalAlignment="Center" />
@@ -89,20 +90,25 @@
                         </Style>
                     </StackPanel.Resources>
                     <StackPanel>
+                        <TextBlock Text="Date" Style="{StaticResource txtLabel}"/>
+                        <TextBlock Text="{Binding SelectedDate}" Style="{StaticResource txtValue}"/>
+                    </StackPanel>
+                    <StackPanel>
                         <TextBlock Text="Total Jobs" Style="{StaticResource txtLabel}"/>
-                        <TextBlock Name="txtJobs" Text="{Binding TotalJobs}" Style="{StaticResource txtValue}"/>
+                        <TextBlock Text="{Binding TotalJobs}" Style="{StaticResource txtValue}"/>
                     </StackPanel>
                     <StackPanel>
                         <TextBlock Text="Total Files Changed" Style="{StaticResource txtLabel}"/>
-                        <TextBlock Name="txtChanges" Text="{Binding TotalChanges}" Style="{StaticResource txtValue}"/>
+                        <TextBlock Text="{Binding TotalChanges}" Style="{StaticResource txtValue}"/>
                     </StackPanel>
                     <StackPanel>
                         <TextBlock Text="Total Time (hh:mm)" Style="{StaticResource txtLabel}"/>
-                        <TextBlock Name="txtTime" Text="{Binding TotalTime}" Style="{StaticResource txtValue}"/>
+                        <TextBlock Text="{Binding TotalTime}" Style="{StaticResource txtValue}"/>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </Grid>
 
+        <TextBlock Grid.Row="2" Text="{Binding Status}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14"/>
     </Grid>
 </Window>
