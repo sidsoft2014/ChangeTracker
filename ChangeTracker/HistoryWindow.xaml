@@ -21,13 +21,15 @@
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="5"/>
                     <Setter Property="Width" Value="90"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="FontFamily" Value="Ebrima"/>
                 </Style>
             </StackPanel.Resources>
             <ComboBox Name="cbxHistory" Width="128" HorizontalAlignment="Left" Margin="10,5" ItemsSource="{Binding XmlFiles.Keys}"
                       SelectedItem="{Binding SelectedFileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             <Button Content="Clear Day" Background="Yellow" FontWeight="Bold"
-                    Command="{Binding cmdClearDay}" ToolTip="Clear the current day from the history logs."/>
-            <Button Content="Clear History" Background="Red" Foreground="White" FontWeight="Bold"
+                    Command="{Binding cmdClearDay}" ToolTip="Clear the selected day from the history logs."/>
+            <Button Content="Clear History" Background="Red" FontWeight="Bold"
                     Command="{Binding cmdClearAll}" ToolTip="Clear all history logs." />
         </StackPanel>
 
@@ -59,7 +61,7 @@
                                        HorizontalAlignment="Center" />
                             </DataGridTextColumn.Header>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding TimeSpent}" Width="80">
+                        <DataGridTextColumn Binding="{Binding TimeSpentAsString}" Width="80">
                             <DataGridTextColumn.Header>
                                 <TextBlock TextWrapping="Wrap" Text="Time Spent (hh:mm)"
                                        HorizontalAlignment="Center" />
@@ -79,21 +81,23 @@
                     <StackPanel.Resources>
                         <Style TargetType="TextBlock" x:Key="txtLabel">
                             <Setter Property="Margin" Value="5,5,0,0"/>
+                            <Setter Property="TextAlignment" Value="Center"/>
                         </Style>
                         <Style TargetType="TextBlock" x:Key="txtValue">
                             <Setter Property="Margin" Value="5,0,0,10"/>
+                            <Setter Property="TextAlignment" Value="Center"/>
                         </Style>
                     </StackPanel.Resources>
                     <StackPanel>
-                        <TextBlock Text="Total Jobs:" Style="{StaticResource txtLabel}"/>
+                        <TextBlock Text="Total Jobs" Style="{StaticResource txtLabel}"/>
                         <TextBlock Name="txtJobs" Text="{Binding TotalJobs}" Style="{StaticResource txtValue}"/>
                     </StackPanel>
                     <StackPanel>
-                        <TextBlock Text="Total Files Changed:" Style="{StaticResource txtLabel}"/>
+                        <TextBlock Text="Total Files Changed" Style="{StaticResource txtLabel}"/>
                         <TextBlock Name="txtChanges" Text="{Binding TotalChanges}" Style="{StaticResource txtValue}"/>
                     </StackPanel>
                     <StackPanel>
-                        <TextBlock Text="Total Time (hh:mm):" Style="{StaticResource txtLabel}"/>
+                        <TextBlock Text="Total Time (hh:mm)" Style="{StaticResource txtLabel}"/>
                         <TextBlock Name="txtTime" Text="{Binding TotalTime}" Style="{StaticResource txtValue}"/>
                     </StackPanel>
                 </StackPanel>

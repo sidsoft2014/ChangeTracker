@@ -110,12 +110,30 @@ namespace ChangeTracker.ViewModels
             get
             {
                 TimeSpan ts = new TimeSpan(0, 0, 0);
-                foreach (var item in Records)
+
+                foreach (var record in Records)
                 {
-                    var span = item.End - item.Start;
-                    ts.Add(span);
+                    ts = ts.Add(record.TimeSpentAsTimeSpan);
                 }
-                var time = ts.ToString().Remove(5);
+
+                int hours = ts.Hours;
+                int minutes = ts.Minutes;
+
+                if (minutes < 1)
+                    minutes = 0;
+                else if (minutes < 15)
+                    minutes = 15;
+                else if (minutes < 30)
+                    minutes = 30;
+                else if (minutes < 45)
+                    minutes = 45;
+                else
+                {
+                    minutes = 0;
+                    ++hours;
+                }
+
+                var time = new TimeSpan(hours, minutes, 0).ToString().Remove(5);
 
                 return time;
             }
@@ -178,7 +196,7 @@ namespace ChangeTracker.ViewModels
                     "Wipe day log?"))
                     return;
 
-                // If the record is todays record we want to clear global history as well
+                // If the record is todays record, we want to clear global history as well
                 // to prevent it re-saving on exit.
                 if (Records.FirstOrDefault().Start.ToShortDateString() == DateTime.Now.ToShortDateString())
                     Globals.History = new List<HistoryRecord>();
@@ -201,8 +219,8 @@ namespace ChangeTracker.ViewModels
                 "Wipe all logs"))
                 return;
 
-            Records = new List<HistoryRecord>();
-            Globals.History = new List<HistoryRecord>();
+            // Clear local record list and global history.
+            Globals.History = Records = new List<HistoryRecord>();
 
             var dInf = new DirectoryInfo(Globals.HistoryFolder);
             var files = dInf.GetFiles().Where(p => p.Extension == ".xml").Select(o => o.FullName);

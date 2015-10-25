@@ -8,19 +8,43 @@ namespace ChangeTracker.Models
         public string Directory { get; set; }
         public DateTime Start { get; set; }
         public DateTime End { get; set; }
-        public string TimeSpent
+        public string TimeSpentAsString
         {
             get
             {
-                if (Start == default(DateTime) || End == default(DateTime))
-                    return "00:00";
+                int hours = TimeSpentAsTimeSpan.Hours;
+                int minutes = TimeSpentAsTimeSpan.Minutes;
 
-                TimeSpan span = End - Start;
-                string result = span.ToString().Remove(5);
+                if (minutes < 1)
+                    minutes = 0;
+                else if (minutes < 15)
+                    minutes = 15;
+                else if (minutes < 30)
+                    minutes = 30;
+                else if (minutes < 45)
+                    minutes = 45;
+                else
+                {
+                    minutes = 0;
+                    ++hours;
+                }
 
-                return result;
+                return new TimeSpan(hours, minutes, 0).ToString().Remove(5);
             }
         }
+
+        public TimeSpan TimeSpentAsTimeSpan
+        {
+            get
+            {
+                if (Start >= End)
+                    return new TimeSpan(0, 0, 0);
+
+                TimeSpan span = End - Start;
+                return span;
+            }
+        }
+
         public int ChangedFilesCount { get; set; }
 
         public bool Equals(HistoryRecord other)
