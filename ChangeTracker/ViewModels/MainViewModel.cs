@@ -25,12 +25,15 @@ namespace ChangeTracker.ViewModels
         internal HashSet<string> ExcludedDirectorys = new HashSet<string>();
 
         private bool _isEditorLaunched = false;
+        private bool _isHistoryLaunched = false;
         private string _watchedFolder;
         private string _selctedFile;
         private string _status = "Idle";
         private string[] _normalStates = { "Idle", "Watching" };
         private Watcher watcher;
-        private FilterEditor editor;
+        private FilterEditor _editorWindow;
+        private HistoryWindow _historyWindow;
+        private HistoryRecord _currentRecord;
         private ICommand _cmdSelectFolder;
         private ICommand _cmdSelectScanMode;
         private ICommand _cmdSelectFilterMode;
@@ -42,15 +45,27 @@ namespace ChangeTracker.ViewModels
         
         private ConcurrentObservableList<ChangedFile> _changedFiles = new ConcurrentObservableList<ChangedFile>();
         private ConcurrentObservableList<FolderExclude> _subFolders = new ConcurrentObservableList<FolderExclude>();
+        private ICommand _cmdViewHistory;
 
         private delegate void SetUIStringDelegate(string text);
         private delegate void AddChangeDelegate(ChangedFile change);
 
         public MainViewModel()
         {
-            watcher = Watcher.Instance(this);
-            watcher.MessageRaised += Watcher_MessageRaised;
-            watcher.Run();
+            try
+            {
+                App.Current.MainWindow.Closing += MainWindow_Closing;
+                watcher = Watcher.Instance(this);
+                watcher.MessageRaised += Watcher_MessageRaised;
+                watcher.Run();
+            }
+            catch
+            {
+#if DEBUG
+                return;
+#endif
+                throw new Exception("Could not start watcher");
+            }
         }
 
         public Brush BorderColor
@@ -81,11 +96,20 @@ namespace ChangeTracker.ViewModels
             {
                 if (value != _watchedFolder)
                 {
+                    if (_currentRecord != null)
+                        LogJobEnd();
+
+                    ClearList(true);
+
                     _watchedFolder = value;
-                    ChangedFiles.Clear();
+
                     SubFolders.Clear();
                     ExcludedDirectorys.Clear();
                     OnChanged();
+
+                    if(!string.IsNullOrEmpty(value))
+                        LogJobStart();
+
                 }
             }
         }
@@ -217,6 +241,16 @@ namespace ChangeTracker.ViewModels
                 if (_cmdLaunchEditor == null)
                     _cmdLaunchEditor = new LaunchFilterEditor(this);
                 return _cmdLaunchEditor;
+            }
+        }
+
+        public ICommand cmdViewHistory
+        {
+            get
+            {
+                if (_cmdViewHistory == null)
+                    _cmdViewHistory = new ViewHistory(this);
+                return _cmdViewHistory;
             }
         }
 
@@ -418,16 +452,33 @@ namespace ChangeTracker.ViewModels
         {
             if (!_isEditorLaunched)
             {
-                editor = new FilterEditor();
-                editor.Closed += (s, e) => { _isEditorLaunched = false; };
+                _editorWindow = new FilterEditor();
+                _editorWindow.Closed += (s, e) => { _isEditorLaunched = false; };
                 _isEditorLaunched = true;
-                editor.Show();
+                _editorWindow.Show();
             }
             else
             {
-                if (editor.WindowState == WindowState.Minimized)
-                    editor.WindowState = WindowState.Normal;
-                editor.Focus();
+                if (_editorWindow.WindowState == WindowState.Minimized)
+                    _editorWindow.WindowState = WindowState.Normal;
+                _editorWindow.Focus();
+            }
+        }
+
+        internal void ViewHistory()
+        {
+            if (!_isHistoryLaunched)
+            {
+                _historyWindow = new HistoryWindow();
+                _historyWindow.Closed += (s, e) => { _isHistoryLaunched = false; };
+                _historyWindow.Show();
+                _isHistoryLaunched = true;
+            }
+            else
+            {
+                if (_historyWindow.WindowState == WindowState.Minimized)
+                    _historyWindow.WindowState = WindowState.Normal;
+                _historyWindow.Focus();
             }
         }
 
@@ -449,6 +500,34 @@ namespace ChangeTracker.ViewModels
             {
                 AddChangeDelegate del = new AddChangeDelegate(AddNewChange);
                 Application.Current.Dispatcher.Invoke(del, new object[] { change });
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (_currentRecord != null)
+                        LogJobEnd();
+
+                    _cmdSelectFolder = null;
+                    _cmdSelectScanMode = null;
+                    _cmdSaveList = null;
+                    _cmdCopyFiles = null;
+                    _cmdLaunchEditor = null;
+                    _currentRecord = null;
+
+                    if(watcher != null)
+                        watcher.Dispose();
+                    if(_changedFiles != null)
+                        _changedFiles.Dispose();
+                    if(_subFolders != null)
+                        _subFolders.Dispose();
+                }
+
+                base.Dispose(disposing);
             }
         }
 
@@ -502,10 +581,40 @@ namespace ChangeTracker.ViewModels
             Properties.Settings.Default.LastCopied = destination;
             Properties.Settings.Default.Save();
 
+            if (_currentRecord != null)
+                LogJobEnd();
+
             ClearList(true);
 
             SetTemporaryStatusMessage(result);
             Process.Start(destination);
+
+            if (!string.IsNullOrEmpty(_watchedFolder))
+                LogJobStart();
+        }
+
+        private void LogJobStart()
+        {
+            _currentRecord = new HistoryRecord
+            {
+                Directory = WatchedFolder,
+                Start = DateTime.Now,
+            };
+            Globals.History.Add(_currentRecord);
+
+            SetTemporaryStatusMessage("New job started.");
+        }
+
+        private void LogJobEnd()
+        {
+            HistoryRecord old = Globals.History.FirstOrDefault(p => p == _currentRecord);
+            if (old != null)
+            {
+                old.End = DateTime.Now;
+                old.ChangedFilesCount = ChangedFiles.Count;
+            }
+            _currentRecord = null;
+            SetTemporaryStatusMessage("Job ended.");
         }
 
         private void Folder_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -531,28 +640,12 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        protected override void Dispose(bool disposing)
+        private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    _cmdSelectFolder = null;
-                    _cmdSelectScanMode = null;
-                    _cmdSaveList = null;
-                    _cmdCopyFiles = null;
-                    _cmdLaunchEditor = null;
+            if (_currentRecord != null)
+                LogJobEnd();
 
-                    if(watcher != null)
-                        watcher.Dispose();
-                    if(_changedFiles != null)
-                        _changedFiles.Dispose();
-                    if(_subFolders != null)
-                        _subFolders.Dispose();
-                }
-
-                base.Dispose(disposing);
-            }
+            Globals.OnClose();
         }
     }
 }

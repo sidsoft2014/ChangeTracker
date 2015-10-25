@@ -15,6 +15,7 @@ using DirectoryNotFoundException = System.IO.DirectoryNotFoundException;
 
 namespace ChangeTracker.Models
 {
+    [Serializable]
     public sealed class ChangedFile : IEquatable<ChangedFile>, IDisposable
     {
         internal FileInfo File { get; private set; }

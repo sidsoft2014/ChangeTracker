@@ -8,5 +8,6 @@
     <Application.Resources>
         <vms:MainViewModel x:Key="mvm"/>
         <vms:EditorViewModel x:Key="evm"/>
+        <vms:HistoryViewModel x:Key="hvm"/>
     </Application.Resources>
 </Application>

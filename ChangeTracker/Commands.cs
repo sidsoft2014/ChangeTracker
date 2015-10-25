@@ -70,6 +70,28 @@ namespace ChangeTracker.Commands
         }
     }
 
+    public sealed class ViewHistory : ICommand
+    {
+        private MainViewModel _viewModel;
+
+        public ViewHistory(MainViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged;
+
+        public bool CanExecute(object parameter)
+        {
+            return true;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.ViewHistory();
+        }
+    }
+
     public sealed class SelectFolder : ICommand
     {
         private MainViewModel _viewModel;
@@ -247,4 +269,57 @@ namespace ChangeTracker.Commands
             _viewModel.SaveFilters();
         }
     }
+
+    public sealed class ClearDay : ICommand
+    {
+        private HistoryViewModel _viewModel;
+
+        public ClearDay(HistoryViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _viewModel.CanClearDay;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.ClearDay();
+        }
+    }
+
+    public sealed class ClearAll : ICommand
+    {
+        private HistoryViewModel _viewModel;
+
+        public ClearAll(HistoryViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _viewModel.CanClearAll;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.ClearAll();
+        }
+    }
+
 }

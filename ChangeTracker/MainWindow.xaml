@@ -57,12 +57,16 @@
             <TextBlock Text="Changed Files" Style="{StaticResource txtLabelStyle}"/>
             <DockPanel Grid.Row="1" Margin="5">
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-                    <Button Content="Save List" Width="80" HorizontalAlignment="Left" Margin="5"
-                        Command="{Binding cmdSaveList}" ToolTip="Save the list of changes to a text file"/>
-                    <Button Content="Copy Files" Width="80" HorizontalAlignment="Left" Margin="5"
-                        Command="{Binding cmdCopyFiles}" ToolTip="Copy changed files to a selected directory"/>
-                    <Button Content="Clear List" Width="80" HorizontalAlignment="Left" Margin="5"
-                        Command="{Binding cmdClearList}" ToolTip="Clear the current list of changed files."/>
+                    <StackPanel.Resources>
+                        <Style TargetType="Button">
+                            <Setter Property="Width" Value="75"/>
+                            <Setter Property="Margin" Value="2,5"/>
+                        </Style>
+                    </StackPanel.Resources>
+                    <Button Content="Save List" Command="{Binding cmdSaveList}" ToolTip="Save the list of changes to a text file"/>
+                    <Button Content="Copy Files" Command="{Binding cmdCopyFiles}" ToolTip="Copy changed files to a selected directory"/>
+                    <Button Content="Clear List" Command="{Binding cmdClearList}" ToolTip="Clear the current list of changed files."/>
+                    <Button Content="History" Margin="15,5" Command="{Binding cmdViewHistory}" ToolTip="View stored job history logs."/>
                 </StackPanel>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" DockPanel.Dock="Top">
                     <DataGrid ItemsSource="{Binding ChangedFiles}" AutoGenerateColumns="False">
