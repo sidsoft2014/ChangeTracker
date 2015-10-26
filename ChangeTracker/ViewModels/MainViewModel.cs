@@ -42,9 +42,9 @@ namespace ChangeTracker.ViewModels
         private ICommand _cmdLaunchEditor;
         private ICommand _cmdClearList;
         private Brush _borderCol = Brushes.Red;
-        
-        private ConcurrentObservableList<ChangedFile> _changedFiles = new ConcurrentObservableList<ChangedFile>();
-        private ConcurrentObservableList<FolderExclude> _subFolders = new ConcurrentObservableList<FolderExclude>();
+
+        private ObservableCollection<ChangedFile> _changedFiles = new ObservableCollection<ChangedFile>();
+        private ObservableCollection<FolderExclude> _subFolders = new ObservableCollection<FolderExclude>();
         private ICommand _cmdViewHistory;
 
         private delegate void SetUIStringDelegate(string text);
@@ -76,7 +76,7 @@ namespace ChangeTracker.ViewModels
             }
             set
             {
-                if(_borderCol != value)
+                if (_borderCol != value)
                 {
                     _borderCol = value;
                     OnChanged();
@@ -107,7 +107,7 @@ namespace ChangeTracker.ViewModels
                     ExcludedDirectorys.Clear();
                     OnChanged();
 
-                    if(!string.IsNullOrEmpty(value))
+                    if (!string.IsNullOrEmpty(value))
                         LogJobStart();
 
                 }
@@ -148,7 +148,7 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        public ConcurrentObservableList<ChangedFile> ChangedFiles
+        public ObservableCollection<ChangedFile> ChangedFiles
         {
             get
             {
@@ -161,7 +161,7 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        public ConcurrentObservableList<FolderExclude> SubFolders
+        public ObservableCollection<FolderExclude> SubFolders
         {
             get
             {
@@ -412,7 +412,7 @@ namespace ChangeTracker.ViewModels
                             if (!file.Exists)
                                 continue;
 
-                            string directory = file.FullPath.Replace(WatchedFolder, "").TrimStart('\\');
+                            string directory = file.File.Directory.FullName.Replace(WatchedFolder, "").TrimStart('\\');
                             string fileName = file.Name;
                             string destination = Path.Combine(@"\\?\", folder, directory);
 
@@ -434,14 +434,14 @@ namespace ChangeTracker.ViewModels
 
         internal void ClearList(bool affirmed = false)
         {
-            if(!affirmed)
+            if (!affirmed)
             {
                 WF.DialogResult dlg = WF.MessageBox.Show("Are you sure you want to clear this list?", "Clear List?", WF.MessageBoxButtons.YesNo);
                 if (dlg == WF.DialogResult.No)
                     return;
             }
 
-            ChangedFiles = new ConcurrentObservableList<ChangedFile>();
+            ChangedFiles = new ObservableCollection<ChangedFile>();
             watcher.ResetTime();
         }
 
@@ -519,12 +519,12 @@ namespace ChangeTracker.ViewModels
                     _cmdLaunchEditor = null;
                     _currentRecord = null;
 
-                    if(watcher != null)
+                    if (watcher != null)
                         watcher.Dispose();
-                    if(_changedFiles != null)
-                        _changedFiles.Dispose();
-                    if(_subFolders != null)
-                        _subFolders.Dispose();
+
+                    _changedFiles = null;
+
+                    _subFolders = null;
                 }
 
                 base.Dispose(disposing);
