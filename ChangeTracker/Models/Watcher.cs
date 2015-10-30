@@ -25,7 +25,7 @@ namespace ChangeTracker
     {
         private static Watcher _instance;
         private MainViewModel vm;
-        private DateTime timeStarted = DateTime.UtcNow;
+        private DateTime timeStarted;
 
         private Watcher(MainViewModel viewModel)
         {
@@ -60,6 +60,8 @@ namespace ChangeTracker
         {
             Task.Factory.StartNew(async () =>
             {
+                timeStarted = DateTime.UtcNow;
+
                 while (true)
                 {
                     // Alter delay based on scaning mode.
@@ -121,6 +123,11 @@ namespace ChangeTracker
             }, TaskCreationOptions.LongRunning);
         }
 
+        public void ResetTime()
+        {
+            timeStarted = DateTime.UtcNow;
+        }
+
         private void Scan(SettingsCollection sc, DirectoryInfo dInf)
         {
             // Check all files within the directory and subdirectories.
@@ -160,43 +167,35 @@ namespace ChangeTracker
         private void ScanParallel(SettingsCollection sc, DirectoryInfo dInf)
         {
             // Check all files within the directory and subdirectories.
-            Parallel.ForEach<FileInfo>(dInf.GetFiles("*", SearchOption.AllDirectories), (file) =>
+            Parallel.ForEach(dInf.GetFiles("*", SearchOption.AllDirectories), (file) =>
             {
                 // Check if we want to skip the directory based on the current mode and list of user excluded directories.
                 if (!vm.ExcludedDirectorys.Contains(file.DirectoryName)
                 && !sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
                 {
                     // If file was written to or created after start time and is not already in list of changes.
-                    if ((file.LastWriteTimeUtc > timeStarted || file.CreationTimeUtc > timeStarted))
+                    if ((file.LastWriteTimeUtc > timeStarted || file.CreationTimeUtc > timeStarted)
+                     && !sc.FilteredExtensions.Contains(file.Extension.ToLower()))
                     {
                         bool exclude = false;
 
-                        // Check if extension is in list of excluded extensions.
-                        if (!sc.FilteredExtensions.Contains(file.Extension.ToLower()))
+                        // Check if filename includes excluded strings.
+                        foreach (var exculded in sc.FilteredStrings)
                         {
-                            // Check if filename includes excluded strings.
-                            foreach (var exculded in sc.FilteredStrings)
+                            // Convert both comparion strings to lower in order to prevent false negatives.
+                            if (file.FullName.ToLower().Contains(exculded.ToLower()))
                             {
-                                // Convert both comparion strings to lower in order to prevent false negatives.
-                                if (file.FullName.ToLower().Contains(exculded.ToLower()))
-                                {
-                                    // Can't use continue or break to skip file here as this is in a sub-loop.
-                                    exclude = true;
-                                    break;
-                                }
+                                // Can't use continue or break to skip file here as this is in a sub-loop.
+                                exclude = true;
+                                break;
                             }
-
-                            if (!exclude)
-                                vm.AddNewChange(file);
                         }
+
+                        if (!exclude)
+                            vm.AddNewChange(file);
                     }
                 }
             });
-        }
-
-        public void ResetTime()
-        {
-            timeStarted = DateTime.UtcNow;
         }
 
         private void OnMessageRaised(string message)

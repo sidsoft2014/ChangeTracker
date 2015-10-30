@@ -391,44 +391,51 @@ namespace ChangeTracker.ViewModels
         /// </summary>
         internal void CopyFiles()
         {
-            using (WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog())
+            try
             {
-                if (!string.IsNullOrEmpty(Properties.Settings.Default.LastCopied))
+                using (WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog())
                 {
-                    if (Directory.Exists(Properties.Settings.Default.LastCopied))
-                        fbd.SelectedPath = Properties.Settings.Default.LastCopied;
+                    if (!string.IsNullOrEmpty(Properties.Settings.Default.LastCopied))
+                    {
+                        if (Directory.Exists(Properties.Settings.Default.LastCopied))
+                            fbd.SelectedPath = Properties.Settings.Default.LastCopied;
+                    }
+
+                    fbd.ShowNewFolderButton = true;
+                    var dr = fbd.ShowDialog();
+
+                    switch (dr)
+                    {
+                        case WF.DialogResult.OK:
+                        case WF.DialogResult.Yes:
+                            string folder = fbd.SelectedPath;
+                            foreach (var file in ChangedFiles)
+                            {
+                                if (!file.Exists)
+                                    continue;
+
+                                string directory = file.File.Directory.FullName.Replace(WatchedFolder, "").TrimStart('\\');
+                                string fileName = file.Name;
+                                string destination = Path.Combine(@"\\?\", folder, directory);
+
+                                CreateDirectoryStructure(new DirectoryInfo(destination));
+
+                                destination = Path.Combine(destination, fileName);
+
+                                file.Copy(destination, true);
+                            }
+
+                            ResetAndLaunch("Files Copied", folder);
+
+                            break;
+                        default:
+                            break;
+                    }
                 }
-
-                fbd.ShowNewFolderButton = true;
-                var dr = fbd.ShowDialog();
-
-                switch (dr)
-                {
-                    case WF.DialogResult.OK:
-                    case WF.DialogResult.Yes:
-                        string folder = fbd.SelectedPath;
-                        foreach (var file in ChangedFiles)
-                        {
-                            if (!file.Exists)
-                                continue;
-
-                            string directory = file.File.Directory.FullName.Replace(WatchedFolder, "").TrimStart('\\');
-                            string fileName = file.Name;
-                            string destination = Path.Combine(@"\\?\", folder, directory);
-
-                            CreateDirectoryStructure(new DirectoryInfo(destination));
-
-                            destination = Path.Combine(destination, fileName);
-
-                            file.Copy(destination, true);
-                        }
-
-                        ResetAndLaunch("Files Copied", folder);
-
-                        break;
-                    default:
-                        break;
-                }
+            }
+            catch (Exception ex)
+            {
+                SetTemporaryStatusMessage(ex.Message);
             }
         }
 
