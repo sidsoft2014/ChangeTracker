@@ -391,29 +391,36 @@ namespace ChangeTracker.ViewModels
         /// </summary>
         internal void CopyFiles()
         {
-            try
+            List<string> errorList = new List<string>();
+            using (WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog())
             {
-                using (WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog())
+                if (!string.IsNullOrEmpty(Properties.Settings.Default.LastCopied))
                 {
-                    if (!string.IsNullOrEmpty(Properties.Settings.Default.LastCopied))
-                    {
-                        if (Directory.Exists(Properties.Settings.Default.LastCopied))
-                            fbd.SelectedPath = Properties.Settings.Default.LastCopied;
-                    }
+                    if (Directory.Exists(Properties.Settings.Default.LastCopied))
+                        fbd.SelectedPath = Properties.Settings.Default.LastCopied;
+                }
 
-                    fbd.ShowNewFolderButton = true;
-                    var dr = fbd.ShowDialog();
+                fbd.ShowNewFolderButton = true;
+                var dr = fbd.ShowDialog();
 
-                    switch (dr)
-                    {
-                        case WF.DialogResult.OK:
-                        case WF.DialogResult.Yes:
-                            string folder = fbd.SelectedPath;
-                            foreach (var file in ChangedFiles)
+                switch (dr)
+                {
+                    case WF.DialogResult.OK:
+                    case WF.DialogResult.Yes:
+                        string folder = fbd.SelectedPath;
+                        foreach (var file in ChangedFiles)
+                        {
+                            try
                             {
-                                if (!file.Exists)
+                                if (!file.Exists || file.ShortName.StartsWith("_") || file.ShortName.StartsWith("."))
+                                {
+                                    string errorReason = file.Exists ? "Cannot copy filename starting with '_' or '.'" : "File does not exist";
+                                    errorList.Add(Environment.NewLine);
+                                    errorList.Add("Could not copy file: " + file.FullPath);
+                                    errorList.Add("Reason: " + errorReason);
+                                    errorList.Add(Environment.NewLine);
                                     continue;
-
+                                }
                                 string directory = file.File.Directory.FullName.Replace(WatchedFolder, "").TrimStart('\\');
                                 string fileName = file.Name;
                                 string destination = Path.Combine(@"\\?\", folder, directory);
@@ -424,18 +431,36 @@ namespace ChangeTracker.ViewModels
 
                                 file.Copy(destination, true);
                             }
+                            catch (Exception ex)
+                            {
+                                SetTemporaryStatusMessage(ex.Message);
 
-                            ResetAndLaunch("Files Copied", folder);
+                                errorList.Add(Environment.NewLine);
+                                errorList.Add("EXCEPTION: " + file.FullPath);
+                                errorList.Add("Reason: " + ex.Message);
+                                errorList.Add(Environment.NewLine);
+                            }
+                        }
 
-                            break;
-                        default:
-                            break;
-                    }
+                        if(errorList.Count > 0)
+                        {
+                            try
+                            {
+                                string errorPath = Path.Combine(folder, "errors.txt");
+                                System.IO.File.WriteAllLines(errorPath, errorList);
+                            }
+                            catch
+                            {
+
+                            }
+                        }
+
+                        ResetAndLaunch("Files Copied", folder);
+
+                        break;
+                    default:
+                        break;
                 }
-            }
-            catch (Exception ex)
-            {
-                SetTemporaryStatusMessage(ex.Message);
             }
         }
 
