@@ -192,6 +192,32 @@ namespace ChangeTracker.Commands
         }
     }
 
+    public sealed class GetChangesSince : ICommand
+    {
+        private MainViewModel _viewModel;
+
+        public GetChangesSince(MainViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _viewModel.CanGetChangesSince;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.GetChangesSince();
+        }
+    }
+
     public sealed class AddFilter : ICommand
     {
         private EditorViewModel _viewModel;

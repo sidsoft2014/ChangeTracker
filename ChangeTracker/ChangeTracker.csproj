@@ -107,6 +107,9 @@
       <DependentUpon>FilterEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="Globals.cs" />
+    <Compile Include="HistoricChangesWindow.xaml.cs">
+      <DependentUpon>HistoricChangesWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="HistoryWindow.xaml.cs">
       <DependentUpon>HistoryWindow.xaml</DependentUpon>
     </Compile>
@@ -120,6 +123,10 @@
     <Compile Include="Models\Watcher.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Page Include="FilterEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="HistoricChangesWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

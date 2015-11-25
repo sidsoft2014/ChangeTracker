@@ -33,6 +33,7 @@
             <RowDefinition Height="36"/>
             <RowDefinition Height="1*"/>
             <RowDefinition Height="26"/>
+            <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
 
         <Border BorderThickness="2" CornerRadius="5" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="5,2">
@@ -117,6 +118,11 @@
             </DockPanel>
         </Grid>
 
-        <TextBlock Grid.Row="2" Name="txtStatus" Text="{Binding Status}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Content="Get All Changes Since Date" Command="{Binding cmdGetChangesSince}"
+                    ToolTip="Opens a window to allow searching for all files changed since a selected date."/>
+        </StackPanel>
+        
+        <TextBlock Grid.Row="3" Name="txtStatus" Text="{Binding Status}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14"/>
     </Grid>
 </Window>

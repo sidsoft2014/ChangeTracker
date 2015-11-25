@@ -24,12 +24,12 @@ namespace ChangeTracker
     internal class Watcher : IDisposable
     {
         private static Watcher _instance;
-        private MainViewModel vm;
-        private DateTime timeStarted;
+        private MainViewModel _vm;
+        private DateTime _timeStarted;
 
         private Watcher(MainViewModel viewModel)
         {
-            vm = viewModel;
+            _vm = viewModel;
         }
         public static Watcher Instance(MainViewModel viewModel)
         {
@@ -60,7 +60,7 @@ namespace ChangeTracker
         {
             Task.Factory.StartNew(async () =>
             {
-                timeStarted = DateTime.UtcNow;
+                _timeStarted = DateTime.UtcNow;
 
                 while (true)
                 {
@@ -86,14 +86,14 @@ namespace ChangeTracker
                     }
 
                     // Check we have a directory to watch and settings to check against.
-                    if (!String.IsNullOrEmpty(vm.WatchedFolder)
-                    && vm.WatchedFolder != "None"
+                    if (!String.IsNullOrEmpty(_vm.WatchedFolder)
+                    && _vm.WatchedFolder != "None"
                     && sc != null)
                     {
                         // Check the directory exists.
-                        if (Directory.Exists(vm.WatchedFolder))
+                        if (Directory.Exists(_vm.WatchedFolder))
                         {
-                            DirectoryInfo dInf = new DirectoryInfo(vm.WatchedFolder);
+                            DirectoryInfo dInf = new DirectoryInfo(_vm.WatchedFolder);
 
                             try
                             {
@@ -125,7 +125,7 @@ namespace ChangeTracker
 
         public void ResetTime()
         {
-            timeStarted = DateTime.UtcNow;
+            _timeStarted = DateTime.UtcNow;
         }
 
         private void Scan(SettingsCollection sc, DirectoryInfo dInf)
@@ -134,11 +134,11 @@ namespace ChangeTracker
             foreach (var file in dInf.GetFiles("*", SearchOption.AllDirectories))
             {
                 // Check if we want to skip the directory based on the current mode and list of user excluded directories.
-                if (vm.ExcludedDirectorys.Contains(file.DirectoryName) || sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
+                if (_vm.ExcludedDirectorys.Contains(file.DirectoryName) || sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
                     continue;
 
                 // If file was written to or created after start time and is not already in list of changes.
-                if ((file.LastWriteTimeUtc > timeStarted || file.CreationTimeUtc > timeStarted))
+                if ((file.LastWriteTimeUtc > _timeStarted || file.CreationTimeUtc > _timeStarted))
                 {
                     bool exclude = false;
 
@@ -159,7 +159,7 @@ namespace ChangeTracker
                     }
 
                     if (!exclude)
-                        vm.AddNewChange(file);
+                        _vm.AddNewChange(file);
                 }
             }
         }
@@ -170,11 +170,11 @@ namespace ChangeTracker
             Parallel.ForEach(dInf.GetFiles("*", SearchOption.AllDirectories), (file) =>
             {
                 // Check if we want to skip the directory based on the current mode and list of user excluded directories.
-                if (!vm.ExcludedDirectorys.Contains(file.DirectoryName)
+                if (!_vm.ExcludedDirectorys.Contains(file.DirectoryName)
                 && !sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
                 {
                     // If file was written to or created after start time and is not already in list of changes.
-                    if ((file.LastWriteTimeUtc > timeStarted || file.CreationTimeUtc > timeStarted)
+                    if ((file.LastWriteTimeUtc > _timeStarted || file.CreationTimeUtc > _timeStarted)
                      && !sc.FilteredExtensions.Contains(file.Extension.ToLower()))
                     {
                         bool exclude = false;
@@ -192,7 +192,7 @@ namespace ChangeTracker
                         }
 
                         if (!exclude)
-                            vm.AddNewChange(file);
+                            _vm.AddNewChange(file);
                     }
                 }
             });
@@ -215,7 +215,7 @@ namespace ChangeTracker
             {
                 if (disposing)
                 {
-                    vm = null;
+                    _vm = null;
                     MessageRaised = null;
                 }
 

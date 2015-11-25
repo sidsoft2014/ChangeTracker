@@ -26,14 +26,16 @@ namespace ChangeTracker.ViewModels
 
         private bool _isEditorLaunched = false;
         private bool _isHistoryLaunched = false;
+        private bool _isHistoricLaunched = false;
         private string _watchedFolder;
         private string _selctedFile;
         private string _status = "Idle";
         private string[] _normalStates = { "Idle", "Watching" };
         private Watcher watcher;
-        private FilterEditor _editorWindow;
-        private HistoryWindow _historyWindow;
+        private FilterEditor _filterEditorWindow;
+        private HistoryWindow _jobHistoryWindow;
         private HistoryRecord _currentRecord;
+        private HistoricChangesWindow _historicChangesWindow;
         private ICommand _cmdSelectFolder;
         private ICommand _cmdSelectScanMode;
         private ICommand _cmdSelectFilterMode;
@@ -41,11 +43,12 @@ namespace ChangeTracker.ViewModels
         private ICommand _cmdCopyFiles;
         private ICommand _cmdLaunchEditor;
         private ICommand _cmdClearList;
+        private ICommand _cmdViewHistory;
+        private ICommand _cmdGetChangesSince;
         private Brush _borderCol = Brushes.Red;
 
         private ObservableCollection<ChangedFile> _changedFiles = new ObservableCollection<ChangedFile>();
         private ObservableCollection<FolderExclude> _subFolders = new ObservableCollection<FolderExclude>();
-        private ICommand _cmdViewHistory;
 
         private delegate void SetUIStringDelegate(string text);
         private delegate void AddChangeDelegate(ChangedFile change);
@@ -254,11 +257,30 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        public ICommand cmdGetChangesSince
+        {
+            get
+            {
+                if (_cmdGetChangesSince == null)
+                    _cmdGetChangesSince = new GetChangesSince(this);
+                return _cmdGetChangesSince;
+            }
+        }
+
         internal bool CanSaveList
         {
             get
             {
                 return ChangedFiles.Count > 0;
+            }
+        }
+
+        internal bool CanGetChangesSince
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(WatchedFolder)
+                    && WatchedFolder.ToLower().Trim() != "none";
             }
         }
 
@@ -353,6 +375,26 @@ namespace ChangeTracker.ViewModels
         }
 
         /// <summary>
+        /// Get all changes from a given date.
+        /// </summary>
+        internal void GetChangesSince()
+        {
+            if (!_isHistoricLaunched)
+            {
+                _historicChangesWindow = new HistoricChangesWindow(this);
+                _historicChangesWindow.Closed += (s, e) => { _isHistoricLaunched = false; };
+                _historicChangesWindow.Show();
+                _isHistoricLaunched = true;
+            }
+            else
+            {
+                if (_historicChangesWindow.WindowState == WindowState.Minimized)
+                    _historicChangesWindow.WindowState = WindowState.Normal;
+                _historicChangesWindow.Focus();
+            }
+        }
+
+        /// <summary>
         /// Save the list of changed files as a text file.
         /// </summary>
         internal void SaveList()
@@ -392,7 +434,9 @@ namespace ChangeTracker.ViewModels
         internal void CopyFiles()
         {
             List<string> errorList = new List<string>();
-            using (WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog())
+            WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog();
+
+            try
             {
                 if (!string.IsNullOrEmpty(Properties.Settings.Default.LastCopied))
                 {
@@ -442,7 +486,7 @@ namespace ChangeTracker.ViewModels
                             }
                         }
 
-                        if(errorList.Count > 0)
+                        if (errorList.Count > 0)
                         {
                             try
                             {
@@ -461,6 +505,10 @@ namespace ChangeTracker.ViewModels
                     default:
                         break;
                 }
+            }
+            finally
+            {
+                fbd.Dispose();
             }
         }
 
@@ -484,16 +532,16 @@ namespace ChangeTracker.ViewModels
         {
             if (!_isEditorLaunched)
             {
-                _editorWindow = new FilterEditor();
-                _editorWindow.Closed += (s, e) => { _isEditorLaunched = false; };
                 _isEditorLaunched = true;
-                _editorWindow.Show();
+                _filterEditorWindow = new FilterEditor();
+                _filterEditorWindow.Closed += (s, e) => { _isEditorLaunched = false; };
+                _filterEditorWindow.Show();
             }
             else
             {
-                if (_editorWindow.WindowState == WindowState.Minimized)
-                    _editorWindow.WindowState = WindowState.Normal;
-                _editorWindow.Focus();
+                if (_filterEditorWindow.WindowState == WindowState.Minimized)
+                    _filterEditorWindow.WindowState = WindowState.Normal;
+                _filterEditorWindow.Focus();
             }
         }
 
@@ -501,16 +549,16 @@ namespace ChangeTracker.ViewModels
         {
             if (!_isHistoryLaunched)
             {
-                _historyWindow = new HistoryWindow();
-                _historyWindow.Closed += (s, e) => { _isHistoryLaunched = false; };
-                _historyWindow.Show();
+                _jobHistoryWindow = new HistoryWindow();
+                _jobHistoryWindow.Closed += (s, e) => { _isHistoryLaunched = false; };
+                _jobHistoryWindow.Show();
                 _isHistoryLaunched = true;
             }
             else
             {
-                if (_historyWindow.WindowState == WindowState.Minimized)
-                    _historyWindow.WindowState = WindowState.Normal;
-                _historyWindow.Focus();
+                if (_jobHistoryWindow.WindowState == WindowState.Minimized)
+                    _jobHistoryWindow.WindowState = WindowState.Normal;
+                _jobHistoryWindow.Focus();
             }
         }
 
