@@ -26,6 +26,8 @@ namespace ChangeTracker
 
         public static List<HistoryRecord> History;
 
+        public static SettingsCollection SelectedFilter { get; set; }
+
         public static void Init()
         {
             if (!Directory.Exists(SettingsFolder))
@@ -34,6 +36,8 @@ namespace ChangeTracker
             InitGeneralMode();
             InitWebMode();
             InitHistory();
+
+            SelectedFilter = WebSettings;
         }
 
         public static void XmlToHistory(string path, out List<HistoryRecord> output)
@@ -156,6 +160,37 @@ namespace ChangeTracker
             }
         }
 
+        private static void PopulateBaseCodeFilters()
+        {
+            if (WebSettings == null)
+                WebSettings = new SettingsCollection { Name = "Web" };
+
+            CodeSettings.FilteredExtensions = new HashSet<string>
+                {
+                    ".cs",
+                    ".vb",
+                    ".pdb",
+                    ".sln",
+                    ".csproj",
+                    ".vbproj",
+                    ".suo",
+                    ".sync",
+                    ".temp",
+                    ".tmp"
+                };
+            CodeSettings.FilteredStrings = new HashSet<string>
+                {
+                    ".dll.config"
+                };
+            CodeSettings.FilteredDirectories = new HashSet<string>
+                {
+                    "obj",
+                    "debug",
+                    "release"
+                };
+            WebSettings.FilteredRegex = new HashSet<string>();
+        }
+
         private static void PopulateBaseGeneralFilters()
         {
             if (GeneralSettings == null)
@@ -164,6 +199,7 @@ namespace ChangeTracker
             GeneralSettings.FilteredDirectories = new HashSet<string>();
             GeneralSettings.FilteredExtensions = new HashSet<string>();
             GeneralSettings.FilteredStrings = new HashSet<string>();
+            GeneralSettings.FilteredRegex = new HashSet<string>();
         }
 
         private static void PopulateBaseWebFilters()
@@ -173,8 +209,6 @@ namespace ChangeTracker
 
             WebSettings.FilteredExtensions = new HashSet<string>
                 {
-                    ".cs",
-                    ".vb",
                     ".pdb",
                     ".sln",
                     ".csproj",
@@ -194,6 +228,7 @@ namespace ChangeTracker
                     "debug",
                     "release"
                 };
+            WebSettings.FilteredRegex = new HashSet<string>();
         }
     }
 }

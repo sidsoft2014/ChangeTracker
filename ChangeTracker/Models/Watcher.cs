@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using File = Pri.LongPath.File;
 using FileInfo = Pri.LongPath.FileInfo;
 using DirectoryInfo = Pri.LongPath.DirectoryInfo;
+using static ChangeTracker.Globals;
 
 namespace ChangeTracker
 {
@@ -38,12 +39,6 @@ namespace ChangeTracker
             return _instance;
         }
 
-        public enum FilterMode
-        {
-            Web,
-            Code,
-            General
-        }
         public enum ScanMode
         {
             Single,
@@ -51,8 +46,6 @@ namespace ChangeTracker
         }
 
         public event EventHandler<WatcherEvent> MessageRaised;
-
-        public FilterMode FilteringMode { get; set; }
 
         public ScanMode ScaningMode { get; set; }
 
@@ -67,28 +60,11 @@ namespace ChangeTracker
                     // Alter delay based on scaning mode.
                     int delay = ScaningMode == ScanMode.Single ? 1000 : 2000;
                     await Task.Delay(delay);
-
-                    // Get current filter mode.
-                    SettingsCollection sc = null;
-                    switch (FilteringMode)
-                    {
-                        case FilterMode.Web:
-                            sc = Globals.WebSettings;
-                            break;
-                        case FilterMode.Code:
-                            sc = Globals.CodeSettings;
-                            break;
-                        case FilterMode.General:
-                            sc = Globals.GeneralSettings;
-                            break;
-                        default:
-                            break;
-                    }
-
+                    
                     // Check we have a directory to watch and settings to check against.
                     if (!String.IsNullOrEmpty(_vm.WatchedFolder)
-                    && _vm.WatchedFolder != "None"
-                    && sc != null)
+                    && _vm.WatchedFolder.ToLower() != "none"
+                    && SelectedFilter != null)
                     {
                         // Check the directory exists.
                         if (Directory.Exists(_vm.WatchedFolder))
@@ -100,10 +76,10 @@ namespace ChangeTracker
                                 switch (ScaningMode)
                                 {
                                     case ScanMode.Single:
-                                        Scan(sc, dInf);
+                                        Scan(SelectedFilter, dInf);
                                         break;
                                     case ScanMode.Parallel:
-                                        ScanParallel(sc, dInf);
+                                        ScanParallel(SelectedFilter, dInf);
                                         break;
                                     default:
                                         break;
@@ -137,29 +113,23 @@ namespace ChangeTracker
                 if (_vm.ExcludedDirectorys.Contains(file.DirectoryName) || sc.FilteredDirectories.Contains(file.DirectoryName.Split('\\').Last().ToLower()))
                     continue;
 
-                // If file was written to or created after start time and is not already in list of changes.
-                if ((file.LastWriteTimeUtc > _timeStarted || file.CreationTimeUtc > _timeStarted))
+                // Incase we are trying to check a temporary file that may have now been deleted.
+                if (file.Exists)
                 {
-                    bool exclude = false;
-
-                    // Check if extension is in list of excluded extensions.
-                    if (sc.FilteredExtensions.Contains(file.Extension.ToLower()))
-                        continue;
-
-                    // Check if filename includes excluded strings.
-                    foreach (var exculded in sc.FilteredStrings)
+                    try
                     {
-                        // Convert both comparion strings to lower in order to prevent false negatives.
-                        if (file.FullName.ToLower().Contains(exculded.ToLower()))
+                        // If file was written to or created after start time and is not already in list of changes.
+                        if ((file.LastWriteTimeUtc > _timeStarted || file.CreationTimeUtc > _timeStarted))
                         {
-                            // Can't use continue or break to skip file here as this is in a sub-loop.
-                            exclude = true;
-                            break;
+                            if (sc.FilePassesFilter(file))
+                                _vm.AddNewChange(file);
                         }
                     }
+                    // Catch any instances where file has been deleted during checking.
+                    catch (NullReferenceException)
+                    {
 
-                    if (!exclude)
-                        _vm.AddNewChange(file);
+                    }
                 }
             }
         }

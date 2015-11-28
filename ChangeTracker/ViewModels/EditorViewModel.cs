@@ -12,9 +12,10 @@ namespace ChangeTracker.ViewModels
     // pragma_warning.cs
     public class EditorViewModel : ViewModelBase
     {
-        private ObservableCollection<string> _extensions;
-        private ObservableCollection<string> _strings;
         private ObservableCollection<string> _directories;
+        private ObservableCollection<string> _extensions;
+        private ObservableCollection<string> _regexes;
+        private ObservableCollection<string> _strings;
         private string _textBoxExtension;
         private string _textBoxTempFiles;
         private string _textBoxDirectories;
@@ -71,6 +72,18 @@ namespace ChangeTracker.ViewModels
             private set
             {
                 _directories = value;
+                OnChanged();
+            }
+        }
+        public ObservableCollection<string> Regexes
+        {
+            get
+            {
+                return _regexes;
+            }
+            private set
+            {
+                _regexes = value;
                 OnChanged();
             }
         }
@@ -324,12 +337,20 @@ namespace ChangeTracker.ViewModels
                     Extensions = new ObservableCollection<string>(Globals.WebSettings.FilteredExtensions);
                     Strings = new ObservableCollection<string>(Globals.WebSettings.FilteredStrings);
                     Directories = new ObservableCollection<string>(Globals.WebSettings.FilteredDirectories);
+                    Regexes = new ObservableCollection<string>(Globals.WebSettings.FilteredRegex);
+                    break;
+                case "code":
+                    Extensions = new ObservableCollection<string>(Globals.CodeSettings.FilteredExtensions);
+                    Strings = new ObservableCollection<string>(Globals.CodeSettings.FilteredStrings);
+                    Directories = new ObservableCollection<string>(Globals.CodeSettings.FilteredDirectories);
+                    Regexes = new ObservableCollection<string>(Globals.CodeSettings.FilteredRegex);
                     break;
                 case "general":
                 default:
                     Extensions = new ObservableCollection<string>(Globals.GeneralSettings.FilteredExtensions);
                     Strings = new ObservableCollection<string>(Globals.GeneralSettings.FilteredStrings);
                     Directories = new ObservableCollection<string>(Globals.GeneralSettings.FilteredDirectories);
+                    Regexes = new ObservableCollection<string>(Globals.GeneralSettings.FilteredRegex);
                     break;
             }
         }
@@ -349,9 +370,24 @@ namespace ChangeTracker.ViewModels
                         Globals.WebSettings.FilteredDirectories = new HashSet<string>(Directories);
                         Globals.WebSettings.FilteredExtensions = new HashSet<string>(Extensions);
                         Globals.WebSettings.FilteredStrings = new HashSet<string>(Strings);
+                        Globals.WebSettings.FilteredRegex = new HashSet<string>(Regexes);
 
                         string json = JsonConvert.SerializeObject(Globals.WebSettings);
                         File.WriteAllText(Globals.SavedWebSettings, json);
+                        break;
+                    }
+                case "code":
+                    {
+                        if (Globals.CodeSettings == null)
+                            Globals.CodeSettings = new Models.SettingsCollection { Name = "Code" };
+
+                        Globals.CodeSettings.FilteredDirectories = new HashSet<string>(Directories);
+                        Globals.CodeSettings.FilteredExtensions = new HashSet<string>(Extensions);
+                        Globals.CodeSettings.FilteredStrings = new HashSet<string>(Strings);
+                        Globals.CodeSettings.FilteredRegex = new HashSet<string>(Regexes);
+
+                        string json = JsonConvert.SerializeObject(Globals.CodeSettings);
+                        File.WriteAllText(Globals.SavedCodeSettings, json);
                         break;
                     }
                 case "general":
@@ -362,6 +398,7 @@ namespace ChangeTracker.ViewModels
                         Globals.GeneralSettings.FilteredDirectories = new HashSet<string>(Directories);
                         Globals.GeneralSettings.FilteredExtensions = new HashSet<string>(Extensions);
                         Globals.GeneralSettings.FilteredStrings = new HashSet<string>(Strings);
+                        Globals.GeneralSettings.FilteredRegex = new HashSet<string>(Regexes);
 
                         string json = JsonConvert.SerializeObject(Globals.GeneralSettings);
                         File.WriteAllText(Globals.SavedGeneralSettings, json);

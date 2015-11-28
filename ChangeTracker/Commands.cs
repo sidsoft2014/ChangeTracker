@@ -214,7 +214,7 @@ namespace ChangeTracker.Commands
 
         public void Execute(object parameter)
         {
-            _viewModel.GetChangesSince();
+            _viewModel.LaunchHistoricChangesWindow();
         }
     }
 

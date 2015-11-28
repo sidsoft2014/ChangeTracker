@@ -19,13 +19,20 @@ namespace ChangeTracker
 
         public HistoricChangesWindow(MainViewModel mainViewModel)
         {
-            if (mainViewModel == null)
-                throw new NullReferenceException("mainViewModel");
+            try
+            {
+                if (mainViewModel == null)
+                    throw new NullReferenceException("mainViewModel");
 
-            this._mainVm = mainViewModel;
-            _currentPath = _mainVm.WatchedFolder;
+                this._mainVm = mainViewModel;
+                _currentPath = _mainVm.WatchedFolder;
 
-            InitializeComponent();
+                InitializeComponent();
+            }
+            catch
+            {
+
+            }
         }
 
         private void DatePicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
@@ -53,8 +60,11 @@ namespace ChangeTracker
                 {
                     if (fileInfo.CreationTimeUtc >= dp.SelectedDate || fileInfo.LastWriteTimeUtc >= dp.SelectedDate)
                     {
-                        changes.Add(fileInfo);
-                        lstChanegs.Items.Add(fileInfo);
+                        if (Globals.SelectedFilter.FilePassesFilter(fileInfo))
+                        {
+                            changes.Add(fileInfo);
+                            lstChanegs.Items.Add(fileInfo);
+                        }
                     }
                 }
 

@@ -6,7 +6,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using SidSoft.MultiThreading.Collections;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
@@ -345,10 +344,13 @@ namespace ChangeTracker.ViewModels
             switch (parameter.ToLower())
             {
                 case "web":
-                    watcher.FilteringMode = Watcher.FilterMode.Web;
+                    Globals.SelectedFilter = Globals.WebSettings;
+                    break;
+                case "code":
+                    Globals.SelectedFilter = Globals.CodeSettings;
                     break;
                 default:
-                    watcher.FilteringMode = Watcher.FilterMode.General;
+                    Globals.SelectedFilter = Globals.GeneralSettings;
                     break;
             }
 
@@ -372,26 +374,6 @@ namespace ChangeTracker.ViewModels
             }
 
             SetTemporaryStatusMessage("Mode changed");
-        }
-
-        /// <summary>
-        /// Get all changes from a given date.
-        /// </summary>
-        internal void GetChangesSince()
-        {
-            if (!_isHistoricLaunched)
-            {
-                _historicChangesWindow = new HistoricChangesWindow(this);
-                _historicChangesWindow.Closed += (s, e) => { _isHistoricLaunched = false; };
-                _historicChangesWindow.Show();
-                _isHistoricLaunched = true;
-            }
-            else
-            {
-                if (_historicChangesWindow.WindowState == WindowState.Minimized)
-                    _historicChangesWindow.WindowState = WindowState.Normal;
-                _historicChangesWindow.Focus();
-            }
         }
 
         /// <summary>
@@ -512,6 +494,27 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        /// <summary>
+        /// Add a new fileinfo to the list of changed files.
+        /// </summary>
+        /// <param name="change"></param>
+        internal void AddNewChange(ChangedFile change)
+        {
+            if (Application.Current == null)
+                return;
+
+            if (Application.Current.Dispatcher.CheckAccess())
+            {
+                if (!ChangedFiles.Contains(change))
+                    ChangedFiles.Add(change);
+            }
+            else
+            {
+                AddChangeDelegate del = new AddChangeDelegate(AddNewChange);
+                Application.Current.Dispatcher.Invoke(del, new object[] { change });
+            }
+        }
+
         internal void ClearList(bool affirmed = false)
         {
             if (!affirmed)
@@ -545,6 +548,26 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        /// <summary>
+        /// Get all changes from a given date.
+        /// </summary>
+        internal void LaunchHistoricChangesWindow()
+        {
+            if (!_isHistoricLaunched)
+            {
+                _historicChangesWindow = new HistoricChangesWindow(this);
+                _historicChangesWindow.Closed += (s, e) => { _isHistoricLaunched = false; };
+                _historicChangesWindow.Show();
+                _isHistoricLaunched = true;
+            }
+            else
+            {
+                if (_historicChangesWindow.WindowState == WindowState.Minimized)
+                    _historicChangesWindow.WindowState = WindowState.Normal;
+                _historicChangesWindow.Focus();
+            }
+        }
+
         internal void ViewHistory()
         {
             if (!_isHistoryLaunched)
@@ -559,27 +582,6 @@ namespace ChangeTracker.ViewModels
                 if (_jobHistoryWindow.WindowState == WindowState.Minimized)
                     _jobHistoryWindow.WindowState = WindowState.Normal;
                 _jobHistoryWindow.Focus();
-            }
-        }
-
-        /// <summary>
-        /// Add a new fileinfo to the list of changed files.
-        /// </summary>
-        /// <param name="change"></param>
-        internal void AddNewChange(ChangedFile change)
-        {
-            if (Application.Current == null)
-                return;
-
-            if (Application.Current.Dispatcher.CheckAccess())
-            {
-                if (!ChangedFiles.Contains(change))
-                    ChangedFiles.Add(change);
-            }
-            else
-            {
-                AddChangeDelegate del = new AddChangeDelegate(AddNewChange);
-                Application.Current.Dispatcher.Invoke(del, new object[] { change });
             }
         }
 
