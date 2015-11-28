@@ -89,10 +89,7 @@ namespace ChangeTracker
 
             try
             {
-                foreach (var item in changes)
-                {
-                    _mainVm.AddNewChange(item);
-                }
+                _mainVm.AddNewChangeSet(changes);
             }
             catch (Exception ex)
             {

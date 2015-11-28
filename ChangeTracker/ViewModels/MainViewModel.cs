@@ -51,6 +51,7 @@ namespace ChangeTracker.ViewModels
 
         private delegate void SetUIStringDelegate(string text);
         private delegate void AddChangeDelegate(ChangedFile change);
+        private delegate void AddChangesDelegate(IEnumerable<ChangedFile> changes);
 
         public MainViewModel()
         {
@@ -512,6 +513,26 @@ namespace ChangeTracker.ViewModels
             {
                 AddChangeDelegate del = new AddChangeDelegate(AddNewChange);
                 Application.Current.Dispatcher.Invoke(del, new object[] { change });
+            }
+        }
+
+        internal void AddNewChangeSet(IEnumerable<ChangedFile> changes)
+        {
+            if (Application.Current == null)
+                return;
+
+            if (Application.Current.Dispatcher.CheckAccess())
+            {
+                foreach (var change in changes)
+                {
+                    if (!ChangedFiles.Contains(change))
+                        ChangedFiles.Add(change);
+                }
+            }
+            else
+            {
+                AddChangesDelegate del = new AddChangesDelegate(AddNewChangeSet);
+                Application.Current.Dispatcher.Invoke(del, new object[] { changes });
             }
         }
 

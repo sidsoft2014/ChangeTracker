@@ -9,9 +9,8 @@
         MinHeight="350"
         Height="400"
         MaxHeight="600"
-        MinWidth="350"
-        Width="400"
-        MaxWidth="600" WindowStyle="ToolWindow">
+        MinWidth="500"
+        WindowStyle="ToolWindow">
 
     <Grid DataContext="{StaticResource evm}">
         <Grid.RowDefinitions>
@@ -27,6 +26,7 @@
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
                 <ColumnDefinition Width="1*"/>
                 <ColumnDefinition Width="1*"/>
                 <ColumnDefinition Width="1*"/>
@@ -79,6 +79,21 @@
                 <TextBox Name="txtStrings" Text="{Binding TextBoxStrings, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Top"/>
                 <Button Content="Remove" Command="{Binding cmdRemoveFilter}" CommandParameter="Strings" DockPanel.Dock="Top"/>
                 <ListView Name="lstStrings" ItemsSource="{Binding Strings}" DockPanel.Dock="Top" SelectedItem="{Binding TextBoxStrings, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"/>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </DockPanel>
+
+            <DockPanel Grid.Column="3" Name="stkRegex">
+                <TextBlock Text="Regex Filters" DockPanel.Dock="Top" Style="{StaticResource stylLabels}" TextWrapping="Wrap"/>
+                <Button Content="Add" Command="{Binding cmdAddFilter}" CommandParameter="Regex" DockPanel.Dock="Top"/>
+                <TextBox Name="txtRegex" Text="{Binding TextBoxRegex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Top"/>
+                <Button Content="Remove" Command="{Binding cmdRemoveFilter}" CommandParameter="Regex" DockPanel.Dock="Top"/>
+                <ListView Name="lstRegex" ItemsSource="{Binding Regexes}" DockPanel.Dock="Top"
+                          SelectedItem="{Binding TextBoxRegex, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding}"/>

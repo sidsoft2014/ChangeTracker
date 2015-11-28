@@ -19,6 +19,7 @@ namespace ChangeTracker.ViewModels
         private string _textBoxExtension;
         private string _textBoxTempFiles;
         private string _textBoxDirectories;
+        private string _textBoxRegex;
         private string _mode = "web";
         private ICommand _cmdAddFilter;
         private ICommand _cmdRemoveFilter;
@@ -133,6 +134,21 @@ namespace ChangeTracker.ViewModels
                 }
             }
         }
+        public string TextBoxRegex
+        {
+            get
+            {
+                return _textBoxRegex;
+            }
+            set
+            {
+                if (value != _textBoxRegex)
+                {
+                    _textBoxRegex = value;
+                    OnChanged();
+                }
+            }
+        }
 
         public ICommand cmdAddFilter
         {
@@ -241,37 +257,6 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        internal void AddFilter(string v)
-        {
-            switch (v.ToLower())
-            {
-                case "extensions":
-                    {
-                        // Add leading dot if not present.
-                        if (!TextBoxExtension.StartsWith("."))
-                            TextBoxExtension = "." + TextBoxExtension;
-
-                        Extensions.Add(TextBoxExtension.ToLower());
-                        TextBoxExtension = string.Empty;
-                        break;
-                    }
-                case "directories":
-                    {
-                        Directories.Add(TextBoxDirectories.ToLower());
-                        TextBoxDirectories = string.Empty;
-                        break;
-                    }
-                case "strings":
-                    {
-                        Strings.Add(TextBoxStrings.ToLower());
-                        TextBoxStrings = string.Empty;
-                        break;
-                    }
-                default:
-                    break;
-            }
-        }
-
         internal bool CanRemoveFilter(string v)
         {
 
@@ -297,24 +282,91 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        internal void AddFilter(string v)
+        {
+            switch (v.ToLower())
+            {
+                case "extensions":
+                    {
+                        if (string.IsNullOrEmpty(TextBoxExtension))
+                            return;
+
+                        // Add leading dot if not present.
+                        if (!TextBoxExtension.StartsWith("."))
+                            TextBoxExtension = "." + TextBoxExtension;
+
+                        Extensions.Add(TextBoxExtension.ToLower());
+                        TextBoxExtension = string.Empty;
+                        break;
+                    }
+                case "directories":
+                    {
+                        if (string.IsNullOrEmpty(TextBoxDirectories))
+                            return;
+
+                        Directories.Add(TextBoxDirectories.ToLower());
+                        TextBoxDirectories = string.Empty;
+                        break;
+                    }
+                case "regex":
+                    {
+                        if (string.IsNullOrEmpty(TextBoxRegex))
+                            return;
+
+                        Regexes.Add(TextBoxRegex.ToLower());
+                        TextBoxRegex = string.Empty;
+                        break;
+                    }
+                case "strings":
+                    {
+                        if (string.IsNullOrEmpty(TextBoxStrings))
+                            return;
+
+                        Strings.Add(TextBoxStrings.ToLower());
+                        TextBoxStrings = string.Empty;
+                        break;
+                    }
+                default:
+                    break;
+            }
+        }
+
         internal void RemoveFilter(string v)
         {
             switch (v.ToLower())
             {
                 case "extensions":
                     {
+                        if (string.IsNullOrEmpty(TextBoxExtension))
+                            return;
+
                         Extensions.Remove(TextBoxExtension);
                         TextBoxExtension = string.Empty;
                         break;
                     }
                 case "directories":
                     {
+                        if (string.IsNullOrEmpty(TextBoxDirectories))
+                            return;
+
                         Directories.Remove(TextBoxDirectories);
                         TextBoxDirectories = string.Empty;
                         break;
                     }
+                case "regex":
+                    {
+                        if (string.IsNullOrEmpty(TextBoxRegex))
+                            return;
+
+                        Regexes.Remove(TextBoxRegex);
+                        TextBoxRegex = string.Empty;
+                        break;
+                    }
                 case "strings":
                     {
+                        if (string.IsNullOrEmpty(TextBoxStrings))
+                            return;
+
                         Strings.Remove(TextBoxStrings);
                         TextBoxStrings = string.Empty;
                         break;

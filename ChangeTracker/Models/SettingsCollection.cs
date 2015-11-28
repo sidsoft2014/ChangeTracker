@@ -56,8 +56,16 @@ namespace ChangeTracker.Models
             // Check for filtered regex expressions.
             foreach (var regex in FilteredRegex)
             {
-                if (Regex.IsMatch(file.FullName, regex))
-                    return false;
+                try
+                {
+                    if (Regex.IsMatch(file.FullName, regex))
+                        return false;
+                }
+                // Incase invalid regex causes exception.
+                catch
+                {
+
+                }
             }
 
             return true;
