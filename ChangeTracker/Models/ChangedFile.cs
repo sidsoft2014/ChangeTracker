@@ -1,17 +1,7 @@
 ﻿using System;
-using Directory = Pri.LongPath.Directory;
 using File = Pri.LongPath.File;
 using FileInfo = Pri.LongPath.FileInfo;
-using DirectoryInfo = Pri.LongPath.DirectoryInfo;
 using Path = Pri.LongPath.Path;
-using IOException = System.IO.IOException;
-using SeekOrigin = System.IO.SeekOrigin;
-using FileOptions = System.IO.FileOptions;
-using FileAttributes = System.IO.FileAttributes;
-using FileMode = System.IO.FileMode;
-using FileAccess = System.IO.FileAccess;
-using FileNotFoundException = System.IO.FileNotFoundException;
-using DirectoryNotFoundException = System.IO.DirectoryNotFoundException;
 
 namespace ChangeTracker.Models
 {

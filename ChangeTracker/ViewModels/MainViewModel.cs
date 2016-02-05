@@ -4,17 +4,15 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
-using File = Pri.LongPath.File;
-using FileInfo = Pri.LongPath.FileInfo;
-using DirectoryInfo = Pri.LongPath.DirectoryInfo;
-using WF = System.Windows.Forms;
-using System.Diagnostics;
 using System.Windows.Media;
+using DirectoryInfo = Pri.LongPath.DirectoryInfo;
+using File = Pri.LongPath.File;
+using WF = System.Windows.Forms;
 
 namespace ChangeTracker.ViewModels
 {
@@ -439,9 +437,9 @@ namespace ChangeTracker.ViewModels
                         {
                             try
                             {
-                                if (!file.Exists || file.ShortName.StartsWith("_") || file.ShortName.StartsWith("."))
+                                if (!file.Exists)
                                 {
-                                    string errorReason = file.Exists ? "Cannot copy filename starting with '_' or '.'" : "File does not exist";
+                                    string errorReason = "File does not exist";
                                     errorList.Add(Environment.NewLine);
                                     errorList.Add("Could not copy file: " + file.FullPath);
                                     errorList.Add("Reason: " + errorReason);

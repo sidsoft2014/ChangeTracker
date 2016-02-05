@@ -50,8 +50,7 @@ namespace ChangeTracker
 
                     if (serialiser.CanDeserialize(reader))
                     {
-                        var obj = serialiser.Deserialize(reader);
-                        var list = obj as List<HistoryRecord>;
+                        var list = serialiser.Deserialize(reader) as List<HistoryRecord>;
                         if (list != null)
                         {
                             output = list;
@@ -61,6 +60,7 @@ namespace ChangeTracker
 
                 }
             }
+
             output = new List<HistoryRecord>();
         }
 
