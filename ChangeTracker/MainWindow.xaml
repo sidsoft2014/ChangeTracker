@@ -7,14 +7,14 @@
         DataContext="{StaticResource mvm}"
         mc:Ignorable="d"
         Title="Change Tracker"
-        Height="350"
-        MinHeight="350"
-        Width="525"
-        MinWidth="525"
+        Height="450"
+        MinHeight="450"
+        Width="625"
+        MinWidth="625"
         BorderThickness="2"
         Padding="5"
         BorderBrush="{Binding BorderColor}"
-        FontFamily="Franklin Gothic Medium"
+        FontFamily="Nirmala UI Semilight"
         SnapsToDevicePixels="True"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
@@ -41,7 +41,7 @@
                 <TextBlock Text="Directory To Watch:" VerticalAlignment="Center" />
                 <TextBlock Name="txtWatchedFolder" MinWidth="256" Margin="5,3,5,3" Text="{Binding WatchedFolder}" />
                 <Button Name="btnSelectFolder" Content="Select" Command="{Binding cmdSelectFolder}"
-                        ToolTip="Select the directory to watch for changes."/>
+                        ToolTip="Select the directory to watch for changes." HorizontalAlignment="Right"/>
             </StackPanel>
         </Border>
 
@@ -52,7 +52,7 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*"/>
-                <ColumnDefinition MinWidth="128" MaxWidth="256"/>
+                <ColumnDefinition MinWidth="128" MaxWidth="512"/>
             </Grid.ColumnDefinitions>
 
             <TextBlock Text="Changed Files" Style="{StaticResource txtLabelStyle}"/>
@@ -81,34 +81,32 @@
             </DockPanel>
 
             <TextBlock Text="Options" Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource txtLabelStyle}"/>
-            <DockPanel Grid.Row="1" Grid.Column="1" Margin="7">
-                <GroupBox Header="Filter Mode" Grid.Column="1" Grid.Row="1" BorderThickness="2" BorderBrush="Black" DockPanel.Dock="Top"
-                          ToolTip="Selects the list of filters to use." Margin="2">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <StackPanel.Resources>
-                            <Style TargetType="RadioButton">
-                                <Setter Property="Margin" Value="5,2"/>
-                            </Style>
-                        </StackPanel.Resources>
-                        <RadioButton GroupName="grpMode" Content="Web" ToolTip="Exclude files types such as .cs and .vb" Command="{Binding cmdSelectFilterMode}" CommandParameter="Web" IsChecked="True"/>
-                        <RadioButton GroupName="grpMode" Content="General" ToolTip="Track changes to all file types" Command="{Binding cmdSelectFilterMode}" CommandParameter="General"/>
-                    </StackPanel>
-                </GroupBox>
-                <GroupBox Header="Scan Mode" Grid.Column="1" Grid.Row="1" BorderThickness="2" BorderBrush="Black" DockPanel.Dock="Top"
-                          ToolTip="Determines if scanning is done by a single thread or in parallel." Margin="2">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <StackPanel.Resources>
-                            <Style TargetType="RadioButton">
-                                <Setter Property="Margin" Value="5,2"/>
-                            </Style>
-                        </StackPanel.Resources>
-                        <RadioButton GroupName="grpScanMode" Content="Single" ToolTip="Scan using a single thread. (Lower max CPU usage, longer scan time)" Command="{Binding cmdSelectScanMode}" CommandParameter="single" IsChecked="True"/>
-                        <RadioButton GroupName="grpScanMode" Content="Multi" ToolTip="Scan using multiple threads. (Higher CPU usage, shorter scan time)" Command="{Binding cmdSelectScanMode}" CommandParameter="multi"/>
-                    </StackPanel>
-                </GroupBox>
-                <Button Content="Edit Filters" DockPanel.Dock="Top" MaxWidth="128" Margin="5" Command="{Binding cmdLaunchEditor}"/>
-                <TextBlock Text="Exclude Folders" DockPanel.Dock="Top"/>
-                <ListView Name="lstExcluded" ItemsSource="{Binding SubFolders}" DockPanel.Dock="Top" ToolTip="Select any subdirectories you wish to exclude from watching">
+            <DockPanel Name="dpnOptions" Grid.Row="1" Grid.Column="1" Margin="7">
+                <TextBlock DockPanel.Dock="Top" Text="Scan Mode"/>
+                <ComboBox Name="ScanModeSelect" DockPanel.Dock="Top" SelectedItem="{Binding SelectedScanMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          ItemsSource="{Binding ScanModes}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <ComboBoxItem Content="{Binding}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBlock DockPanel.Dock="Top" Text="Filter Mode"/>
+                <ComboBox Name="FilterModeSelect" DockPanel.Dock="Top" SelectedItem="{Binding SelectedFilterMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          ItemsSource="{Binding Filters}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <ComboBoxItem Content="{Binding}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button DockPanel.Dock="Top" Content="Edit Filters" MaxWidth="128" Margin="5" Command="{Binding cmdLaunchEditor}"/>
+
+                <Button DockPanel.Dock="Top" Content="Get Changes" MaxWidth="128" Margin="5" Command="{Binding cmdGetChangesManual}" Visibility="{Binding ShowManualControls}"/>
+
+                <TextBlock DockPanel.Dock="Top" Text="Exclude Folders"/>
+                <ListView Name="lstExcluded" DockPanel.Dock="Top" ItemsSource="{Binding SubFolders}" ToolTip="Select any subdirectories you wish to exclude from watching">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <CheckBox IsChecked="{Binding Exclude, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="5,0" VerticalAlignment="Center" Content="{Binding Name}"/>

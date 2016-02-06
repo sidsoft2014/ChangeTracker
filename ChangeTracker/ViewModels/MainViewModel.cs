@@ -27,15 +27,14 @@ namespace ChangeTracker.ViewModels
         private string _watchedFolder;
         private string _selctedFile;
         private string _status = "Idle";
-        private string[] _normalStates = { "Idle", "Watching" };
+        private readonly string[] _normalStates = { "Idle", "Watching" };
         private Watcher watcher;
         private FilterEditor _filterEditorWindow;
         private HistoryWindow _jobHistoryWindow;
         private HistoryRecord _currentRecord;
         private HistoricChangesWindow _historicChangesWindow;
         private ICommand _cmdSelectFolder;
-        private ICommand _cmdSelectScanMode;
-        private ICommand _cmdSelectFilterMode;
+        private ICommand _cmdGetChangesManual;
         private ICommand _cmdSaveList;
         private ICommand _cmdCopyFiles;
         private ICommand _cmdLaunchEditor;
@@ -44,8 +43,13 @@ namespace ChangeTracker.ViewModels
         private ICommand _cmdGetChangesSince;
         private Brush _borderCol = Brushes.Red;
 
-        private ObservableCollection<ChangedFile> _changedFiles = new ObservableCollection<ChangedFile>();
-        private ObservableCollection<FolderExclude> _subFolders = new ObservableCollection<FolderExclude>();
+        private ObservableCollection<ChangedFile> _changedFiles;
+        private ObservableCollection<FolderExclude> _subFolders;
+        private ObservableCollection<string> _customFilters;
+        private ObservableCollection<string> _scanModes;
+        private string _selectedScanMode = string.Empty;
+        private string _selectedFilterMode = string.Empty;
+        private Visibility _showManualControls;
 
         private delegate void SetUIStringDelegate(string text);
         private delegate void AddChangeDelegate(ChangedFile change);
@@ -133,6 +137,57 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        public string SelectedFilterMode
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_selectedFilterMode))
+                    _selectedFilterMode = "General";
+                return _selectedFilterMode;
+            }
+            set
+            {
+                _selectedFilterMode = value;
+                SelectFilterMode(value);
+                OnChanged();
+            }
+        }
+
+        public string SelectedScanMode
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_selectedScanMode))
+                    _selectedScanMode = "Manual";
+                return _selectedScanMode;
+            }
+            set
+            {
+                _selectedScanMode = value;
+                SelectScanMode(value);
+
+                ShowManualControls = _selectedScanMode.ToLower() == "manual" ? Visibility.Visible : Visibility.Hidden;
+
+                OnChanged();
+            }
+        }
+
+        public Visibility ShowManualControls
+        {
+            get
+            {
+                return _showManualControls;
+            }
+            set
+            {
+                if (value != _showManualControls)
+                {
+                    _showManualControls = value;
+                    OnChanged();
+                }
+            }
+        }
+
         public string Status
         {
             get
@@ -153,6 +208,8 @@ namespace ChangeTracker.ViewModels
         {
             get
             {
+                if(_changedFiles == null)
+                    _changedFiles = new ObservableCollection<ChangedFile>();
                 return _changedFiles;
             }
             private set
@@ -166,11 +223,53 @@ namespace ChangeTracker.ViewModels
         {
             get
             {
+                if(_subFolders == null)
+                    _subFolders = new ObservableCollection<FolderExclude>();
                 return _subFolders;
             }
             private set
             {
                 _subFolders = value;
+                OnChanged();
+            }
+        }
+
+        public ObservableCollection<string> Filters
+        {
+            get
+            {
+                if (_customFilters == null)
+                    _customFilters = new ObservableCollection<string>
+                    {
+                        "Code",
+                        "General",
+                        "Web"
+                    };
+                return _customFilters;
+            }
+            private set
+            {
+                _customFilters = value;
+                OnChanged();
+            }
+        }
+
+        public ObservableCollection<string> ScanModes
+        {
+            get
+            {
+                if (_scanModes == null)
+                    _scanModes = new ObservableCollection<string>
+                    {
+                        "Single",
+                        "Multi",
+                        "Manual"
+                    };
+                return _scanModes;
+            }
+            private set
+            {
+                _scanModes = value;
                 OnChanged();
             }
         }
@@ -185,23 +284,13 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        public ICommand cmdSelectScanMode
+        public ICommand cmdGetChangesManual
         {
             get
             {
-                if (_cmdSelectScanMode == null)
-                    _cmdSelectScanMode = new SelectScanMode(this);
-                return _cmdSelectScanMode;
-            }
-        }
-
-        public ICommand cmdSelectFilterMode
-        {
-            get
-            {
-                if (_cmdSelectFilterMode == null)
-                    _cmdSelectFilterMode = new SelectFilterMode(this);
-                return _cmdSelectFilterMode;
+                if (_cmdGetChangesManual == null)
+                    _cmdGetChangesManual = new GetChangesManual(this);
+                return _cmdGetChangesManual;
             }
         }
 
@@ -279,6 +368,17 @@ namespace ChangeTracker.ViewModels
             {
                 return !string.IsNullOrEmpty(WatchedFolder)
                     && WatchedFolder.ToLower().Trim() != "none";
+            }
+        }
+
+        public bool CanGetChangesManual
+        {
+            get
+            {
+                string folder = WatchedFolder.ToLower() == "none" ? string.Empty : WatchedFolder;
+
+                return ShowManualControls == Visibility.Visible
+                && !string.IsNullOrEmpty(folder);
             }
         }
 
@@ -367,12 +467,36 @@ namespace ChangeTracker.ViewModels
                 case "multi":
                     watcher.ScaningMode = Watcher.ScanMode.Parallel;
                     break;
+                case "manual":
+                    watcher.ScaningMode = Watcher.ScanMode.Manual;
+                    break;
                 default:
                     watcher.ScaningMode = Watcher.ScanMode.Single;
                     break;
             }
 
-            SetTemporaryStatusMessage("Mode changed");
+            SetTemporaryStatusMessage("Mode changed: " + parameter.ToUpper());
+        }
+
+        /// <summary>
+        /// Gets all changes since session started.
+        /// <para>Only used in manual mode.</para>
+        /// </summary>
+        internal void GetChangesManual()
+        {
+            var started = watcher.GetTimeStarted;
+
+            DirectoryInfo dInf = new DirectoryInfo(WatchedFolder);
+            foreach (var fileInfo in dInf.GetFiles("*", SearchOption.AllDirectories))
+            {
+                if (fileInfo.CreationTimeUtc >= started || fileInfo.LastWriteTimeUtc >= started)
+                {
+                    if (Globals.SelectedFilter.FilePassesFilter(fileInfo))
+                    {
+                        AddNewChange(fileInfo);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -614,7 +738,6 @@ namespace ChangeTracker.ViewModels
                         LogJobEnd();
 
                     _cmdSelectFolder = null;
-                    _cmdSelectScanMode = null;
                     _cmdSaveList = null;
                     _cmdCopyFiles = null;
                     _cmdLaunchEditor = null;

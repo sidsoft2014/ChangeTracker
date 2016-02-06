@@ -1,5 +1,7 @@
-﻿using System;
+﻿using ChangeTracker.ViewModels;
+using System;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace ChangeTracker
 {
@@ -8,10 +10,13 @@ namespace ChangeTracker
     /// </summary>
     public partial class MainWindow : Window
     {
+        MainViewModel _vm;
+
         public MainWindow()
         {
             InitializeComponent();
             Globals.Init();
+            _vm = this.DataContext as MainViewModel;
         }
 
         protected override void OnClosed(EventArgs e)

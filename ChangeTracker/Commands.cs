@@ -48,6 +48,32 @@ namespace ChangeTracker.Commands
         }
     }
 
+    public sealed class GetChangesManual : ICommand
+    {
+        private MainViewModel _viewModel;
+
+        public GetChangesManual(MainViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _viewModel.CanGetChangesManual;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.GetChangesManual();
+        }
+    }
+
     public sealed class LaunchFilterEditor : ICommand
     {
         private MainViewModel _viewModel;

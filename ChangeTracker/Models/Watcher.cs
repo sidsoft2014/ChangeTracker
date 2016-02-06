@@ -3,6 +3,7 @@ using ChangeTracker.ViewModels;
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using static ChangeTracker.Globals;
 using DirectoryInfo = Pri.LongPath.DirectoryInfo;
@@ -19,15 +20,21 @@ namespace ChangeTracker
         public string Message { get; private set; }
     }
 
-    internal class Watcher : IDisposable
+    internal sealed class Watcher : IDisposable
     {
         private static Watcher _instance;
+        private bool _disposedValue;
+        private int _delay;
         private MainViewModel _vm;
         private DateTime _timeStarted;
+        private CancellationTokenSource _source;
+        private CancellationToken _token;
 
         private Watcher(MainViewModel viewModel)
         {
             _vm = viewModel;
+            _source = new CancellationTokenSource();
+            _disposedValue = false;
         }
         public static Watcher Instance(MainViewModel viewModel)
         {
@@ -39,27 +46,57 @@ namespace ChangeTracker
         public enum ScanMode
         {
             Single,
-            Parallel
+            Parallel,
+            Manual
         }
 
         public event EventHandler<WatcherEvent> MessageRaised;
 
         public ScanMode ScaningMode { get; set; }
 
+        /*
+            TODO: Add cancelation token.
+        */
         public void Run()
         {
-            Task.Factory.StartNew(async () =>
+            TaskFactory factory = new TaskFactory(_token);
+            factory.StartNew(async () =>
             {
                 _timeStarted = DateTime.UtcNow;
 
+                // While true will cause an endless loop, which is what we want.
                 while (true)
                 {
                     // Alter delay based on scaning mode.
-                    int delay = ScaningMode == ScanMode.Single ? 1000 : 2000;
-                    await Task.Delay(delay);
-                    
+
+                    if (ScaningMode == ScanMode.Single)
+                        _delay = 1000;
+                    else if (ScaningMode == ScanMode.Parallel)
+                        _delay = 3000;
+                    else _delay = 0;
+
+                    // While in manual mode we can sleep the thread.
+                    while (_delay == 0)
+                    {
+                        if (ScaningMode == ScanMode.Single)
+                        {
+                            _delay = 1000;
+                            break;
+                        }
+                        else if (ScaningMode == ScanMode.Parallel)
+                        {
+                            _delay = 3000;
+                            break;
+                        }
+                        else
+                            Thread.Sleep(250);
+                    }
+
+                    // If we are here we are not in manual mode and want to wait for the specified delay.
+                    await Task.Delay(_delay);
+
                     // Check we have a directory to watch and settings to check against.
-                    if (!String.IsNullOrEmpty(_vm.WatchedFolder)
+                    if (!string.IsNullOrEmpty(_vm.WatchedFolder)
                     && _vm.WatchedFolder.ToLower() != "none"
                     && SelectedFilter != null)
                     {
@@ -94,7 +131,11 @@ namespace ChangeTracker
                     }
                 }
             }, TaskCreationOptions.LongRunning);
+
+            _source.Cancel();
         }
+
+        public DateTime GetTimeStarted { get { return _timeStarted; } }
 
         public void ResetTime()
         {
@@ -175,23 +216,27 @@ namespace ChangeTracker
         }
 
         #region IDisposable Support
-        private bool disposedValue = false;
-        protected virtual void Dispose(bool disposing)
+        public void Dispose()
         {
-            if (!disposedValue)
+            Dispose(true);
+        }
+        private void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
                     _vm = null;
                     MessageRaised = null;
+
+                    if (_token.IsCancellationRequested)
+                        _source.Cancel();
+
+                    _source.Dispose();
                 }
 
-                disposedValue = true;
+                _disposedValue = true;
             }
-        }
-        public void Dispose()
-        {
-            Dispose(true);
         }
         #endregion
     }

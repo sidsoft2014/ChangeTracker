@@ -14,15 +14,15 @@ namespace ChangeTracker
 {
     public static class Globals
     {
+        public static readonly string SettingsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings");
+        public static readonly string HistoryFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "History");
+        public static readonly string SavedWebSettings = Path.Combine(SettingsFolder, "web.json");
+        public static readonly string SavedCodeSettings = Path.Combine(SettingsFolder, "code.json");
+        public static readonly string SavedGeneralSettings = Path.Combine(SettingsFolder, "general.json");
+
         public static SettingsCollection WebSettings = new SettingsCollection { Name = "Web" };
         public static SettingsCollection CodeSettings = new SettingsCollection { Name = "Code" };
         public static SettingsCollection GeneralSettings = new SettingsCollection { Name = "General" };
-
-        public static string SettingsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings");
-        public static string HistoryFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "History");
-        public static string SavedWebSettings = Path.Combine(SettingsFolder, "web.json");
-        public static string SavedCodeSettings = Path.Combine(SettingsFolder, "code.json");
-        public static string SavedGeneralSettings = Path.Combine(SettingsFolder, "general.json");
 
         public static List<HistoryRecord> History;
 
@@ -64,6 +64,10 @@ namespace ChangeTracker
             output = new List<HistoryRecord>();
         }
 
+        /// <summary>
+        /// Method that needs to be called on application close in order to save history.
+        /// </summary>
+        /// <returns></returns>
         public static bool OnClose()
         {
             if (History.Count > 0)
