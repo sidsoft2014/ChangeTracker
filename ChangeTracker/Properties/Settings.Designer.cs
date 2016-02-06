@@ -46,5 +46,29 @@ namespace ChangeTracker.Properties {
                 this["LastCopied"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastScanMode {
+            get {
+                return ((string)(this["LastScanMode"]));
+            }
+            set {
+                this["LastScanMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastFilterMode {
+            get {
+                return ((string)(this["LastFilterMode"]));
+            }
+            set {
+                this["LastFilterMode"] = value;
+            }
+        }
     }
 }

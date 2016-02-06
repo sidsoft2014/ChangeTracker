@@ -87,7 +87,7 @@
                           ItemsSource="{Binding ScanModes}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <ComboBoxItem Content="{Binding}"/>
+                            <TextBlock Text="{Binding}"/>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
@@ -97,7 +97,7 @@
                           ItemsSource="{Binding Filters}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <ComboBoxItem Content="{Binding}"/>
+                            <TextBlock Text="{Binding}"/>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>

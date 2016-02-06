@@ -23,5 +23,20 @@ namespace ChangeTracker
         {
             InitializeComponent();
         }
+
+        private void btnAddOrSaveFilterMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (btnAddOrSaveFilterMode.Content.ToString() == "New")
+            {
+                cbxFilterName.IsEditable = true;
+                cbxFilterName.Text = "";
+                cbxFilterName.Focus();
+            }
+            else
+            {
+                cbxFilterName.SelectedItem = cbxFilterName.Text;
+                cbxFilterName.IsEditable = false;
+            }
+        }
     }
 }

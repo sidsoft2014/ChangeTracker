@@ -142,7 +142,11 @@ namespace ChangeTracker.ViewModels
             get
             {
                 if (string.IsNullOrEmpty(_selectedFilterMode))
-                    _selectedFilterMode = "General";
+                {
+                    if (string.IsNullOrEmpty(Properties.Settings.Default.LastFilterMode))
+                        _selectedFilterMode = Filters.Count > 0 ? Filters[0] : "General";
+                    else _selectedFilterMode = Properties.Settings.Default.LastFilterMode;
+                }
                 return _selectedFilterMode;
             }
             set
@@ -158,7 +162,11 @@ namespace ChangeTracker.ViewModels
             get
             {
                 if (string.IsNullOrEmpty(_selectedScanMode))
-                    _selectedScanMode = "Manual";
+                {
+                    if (string.IsNullOrEmpty(Properties.Settings.Default.LastScanMode))
+                        _selectedScanMode = ScanModes.Count > 0 ? ScanModes[0] : "Manual";
+                    else _selectedScanMode = Properties.Settings.Default.LastScanMode;
+                }
                 return _selectedScanMode;
             }
             set
@@ -203,12 +211,12 @@ namespace ChangeTracker.ViewModels
                 }
             }
         }
-
+        
         public ObservableCollection<ChangedFile> ChangedFiles
         {
             get
             {
-                if(_changedFiles == null)
+                if (_changedFiles == null)
                     _changedFiles = new ObservableCollection<ChangedFile>();
                 return _changedFiles;
             }
@@ -223,7 +231,7 @@ namespace ChangeTracker.ViewModels
         {
             get
             {
-                if(_subFolders == null)
+                if (_subFolders == null)
                     _subFolders = new ObservableCollection<FolderExclude>();
                 return _subFolders;
             }
@@ -239,12 +247,9 @@ namespace ChangeTracker.ViewModels
             get
             {
                 if (_customFilters == null)
-                    _customFilters = new ObservableCollection<string>
-                    {
-                        "Code",
-                        "General",
-                        "Web"
-                    };
+                {
+                    _customFilters = new ObservableCollection<string>(Globals.FilterCollections.Keys);
+                }
                 return _customFilters;
             }
             private set
@@ -259,12 +264,13 @@ namespace ChangeTracker.ViewModels
             get
             {
                 if (_scanModes == null)
-                    _scanModes = new ObservableCollection<string>
+                {
+                    _scanModes = new ObservableCollection<string>();
+                    foreach (var mode in (Watcher.ScanMode[])Enum.GetValues(typeof(Watcher.ScanMode)))
                     {
-                        "Single",
-                        "Multi",
-                        "Manual"
-                    };
+                        _scanModes.Add(mode.ToString());
+                    }
+                }
                 return _scanModes;
             }
             private set
@@ -354,6 +360,17 @@ namespace ChangeTracker.ViewModels
             }
         }
 
+        internal bool CanGetChangesManual
+        {
+            get
+            {
+                string folder = WatchedFolder.ToLower() == "none" ? string.Empty : WatchedFolder;
+
+                return ShowManualControls == Visibility.Visible
+                && !string.IsNullOrEmpty(folder);
+            }
+        }
+
         internal bool CanSaveList
         {
             get
@@ -368,17 +385,6 @@ namespace ChangeTracker.ViewModels
             {
                 return !string.IsNullOrEmpty(WatchedFolder)
                     && WatchedFolder.ToLower().Trim() != "none";
-            }
-        }
-
-        public bool CanGetChangesManual
-        {
-            get
-            {
-                string folder = WatchedFolder.ToLower() == "none" ? string.Empty : WatchedFolder;
-
-                return ShowManualControls == Visibility.Visible
-                && !string.IsNullOrEmpty(folder);
             }
         }
 
@@ -440,20 +446,15 @@ namespace ChangeTracker.ViewModels
         /// <param name="parameter"></param>
         internal override void SelectFilterMode(string parameter)
         {
-            switch (parameter.ToLower())
-            {
-                case "web":
-                    Globals.SelectedFilter = Globals.WebSettings;
-                    break;
-                case "code":
-                    Globals.SelectedFilter = Globals.CodeSettings;
-                    break;
-                default:
-                    Globals.SelectedFilter = Globals.GeneralSettings;
-                    break;
-            }
+            if (string.IsNullOrEmpty(parameter))
+                return;
 
-            SetTemporaryStatusMessage("Filter Mode Changed");
+            string key = parameter.ToLower();
+            Globals.SelectedFilter = Globals.FilterCollections.FirstOrDefault(p => p.Key.ToLower() == key).Value;
+
+            SetTemporaryStatusMessage("Filter Mode Changed: " + parameter.ToUpper());
+            Properties.Settings.Default.LastFilterMode = parameter;
+            Properties.Settings.Default.Save();
         }
 
         /// <summary>
@@ -462,20 +463,13 @@ namespace ChangeTracker.ViewModels
         /// <param name="parameter"></param>
         internal void SelectScanMode(string parameter)
         {
-            switch (parameter.ToLower())
-            {
-                case "multi":
-                    watcher.ScaningMode = Watcher.ScanMode.Parallel;
-                    break;
-                case "manual":
-                    watcher.ScaningMode = Watcher.ScanMode.Manual;
-                    break;
-                default:
-                    watcher.ScaningMode = Watcher.ScanMode.Single;
-                    break;
-            }
-
+            Watcher.ScanMode mode;
+            if (!Enum.TryParse<Watcher.ScanMode>(parameter, true, out mode))
+                return;
+            watcher.ScaningMode = mode;
             SetTemporaryStatusMessage("Mode changed: " + parameter.ToUpper());
+            Properties.Settings.Default.LastScanMode = mode.ToString();
+            Properties.Settings.Default.Save();
         }
 
         /// <summary>
@@ -680,7 +674,11 @@ namespace ChangeTracker.ViewModels
             {
                 _isEditorLaunched = true;
                 _filterEditorWindow = new FilterEditor();
-                _filterEditorWindow.Closed += (s, e) => { _isEditorLaunched = false; };
+                _filterEditorWindow.Closed += (s, e) =>
+                {
+                    _isEditorLaunched = false;
+                    Filters = null;
+                };
                 _filterEditorWindow.Show();
             }
             else

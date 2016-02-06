@@ -20,8 +20,17 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <RadioButton GroupName="grpMode" Content="Web" Margin="5,2" Command="{Binding cmdSelectMode}" CommandParameter="Web" IsChecked="True"/>
-            <RadioButton GroupName="grpMode" Content="General" Margin="5,2" Command="{Binding cmdSelectMode}" CommandParameter="General"/>
+            <ComboBox Name="cbxFilterName" Width="128" ItemsSource="{Binding FilterModes}"
+                      SelectedItem="{Binding SelectedFilterMode}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Name="btnAddOrSaveFilterMode" Content="{Binding AddSaveBtnText, FallbackValue=New}" Margin="3" Command="{Binding cmdAddOrSaveFilterModeButton_OnClick}"
+                    CommandParameter="{Binding Content, RelativeSource={RelativeSource Self}}"
+                    Click="btnAddOrSaveFilterMode_Click"/>
         </StackPanel>
 
         <Grid Grid.Row="1">
@@ -47,9 +56,11 @@
 
             <DockPanel Grid.Column="0" Name="stkExtensions">
                 <TextBlock Text="Extension Filters" DockPanel.Dock="Top" Style="{StaticResource stylLabels}" TextWrapping="Wrap"/>
-                <Button Content="Add" Command="{Binding cmdAddFilter}" CommandParameter="Extensions" DockPanel.Dock="Top"/>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" HorizontalAlignment="Center">
+                    <Button Content="Add" Command="{Binding cmdAddFilterString}" CommandParameter="Extensions"/>
+                    <Button Content="Remove" Command="{Binding cmdRemoveFilterString}" CommandParameter="Extensions"/>
+                </StackPanel>
                 <TextBox Name="txtExtension" Text="{Binding TextBoxExtension, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Top"/>
-                <Button Content="Remove" Command="{Binding cmdRemoveFilter}" CommandParameter="Extensions" DockPanel.Dock="Top"/>
                 <ListView Name="lstExtensions" ItemsSource="{Binding Extensions}" DockPanel.Dock="Top" SelectedItem="{Binding TextBoxExtension, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
@@ -61,9 +72,11 @@
 
             <DockPanel Grid.Column="1" Name="stkDirectories">
                 <TextBlock Text="Directory Filters" DockPanel.Dock="Top" Style="{StaticResource stylLabels}" TextWrapping="Wrap"/>
-                <Button Content="Add" Command="{Binding cmdAddFilter}" CommandParameter="Directories" DockPanel.Dock="Top"/>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" HorizontalAlignment="Center">
+                    <Button Content="Add" Command="{Binding cmdAddFilterString}" CommandParameter="Directories"/>
+                    <Button Content="Remove" Command="{Binding cmdRemoveFilterString}" CommandParameter="Directories"/>
+                </StackPanel>
                 <TextBox Name="txtDirectories" Text="{Binding TextBoxDirectories, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Top"/>
-                <Button Content="Remove" Command="{Binding cmdRemoveFilter}" CommandParameter="Directories" DockPanel.Dock="Top"/>
                 <ListView Name="lstDirectories" ItemsSource="{Binding Directories}" DockPanel.Dock="Top" SelectedItem="{Binding TextBoxDirectories, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
@@ -75,9 +88,11 @@
 
             <DockPanel Grid.Column="2" Name="stkStrings">
                 <TextBlock Text="String Filters" DockPanel.Dock="Top" Style="{StaticResource stylLabels}" TextWrapping="Wrap"/>
-                <Button Content="Add" Command="{Binding cmdAddFilter}" CommandParameter="Strings" DockPanel.Dock="Top"/>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" HorizontalAlignment="Center">
+                    <Button Content="Add" Command="{Binding cmdAddFilterString}" CommandParameter="Strings"/>
+                    <Button Content="Remove" Command="{Binding cmdRemoveFilterString}" CommandParameter="Strings"/>
+                </StackPanel>
                 <TextBox Name="txtStrings" Text="{Binding TextBoxStrings, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Top"/>
-                <Button Content="Remove" Command="{Binding cmdRemoveFilter}" CommandParameter="Strings" DockPanel.Dock="Top"/>
                 <ListView Name="lstStrings" ItemsSource="{Binding Strings}" DockPanel.Dock="Top" SelectedItem="{Binding TextBoxStrings, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
@@ -89,9 +104,11 @@
 
             <DockPanel Grid.Column="3" Name="stkRegex">
                 <TextBlock Text="Regex Filters" DockPanel.Dock="Top" Style="{StaticResource stylLabels}" TextWrapping="Wrap"/>
-                <Button Content="Add" Command="{Binding cmdAddFilter}" CommandParameter="Regex" DockPanel.Dock="Top"/>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" HorizontalAlignment="Center">
+                    <Button Content="Add" Command="{Binding cmdAddFilterString}" CommandParameter="Regex"/>
+                    <Button Content="Remove" Command="{Binding cmdRemoveFilterString}" CommandParameter="Regex"/>
+                </StackPanel>
                 <TextBox Name="txtRegex" Text="{Binding TextBoxRegex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Top"/>
-                <Button Content="Remove" Command="{Binding cmdRemoveFilter}" CommandParameter="Regex" DockPanel.Dock="Top"/>
                 <ListView Name="lstRegex" ItemsSource="{Binding Regexes}" DockPanel.Dock="Top"
                           SelectedItem="{Binding TextBoxRegex, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}">
                     <ListView.ItemTemplate>
@@ -103,7 +120,7 @@
             </DockPanel>
 
         </Grid>
-        
+
         <Button Grid.Row="2" Content="Save Changes" Width="128" Margin="5" Command="{Binding cmdSaveFilters}"/>
     </Grid>
 </Window>

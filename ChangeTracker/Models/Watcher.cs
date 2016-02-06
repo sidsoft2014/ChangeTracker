@@ -45,9 +45,9 @@ namespace ChangeTracker
 
         public enum ScanMode
         {
+            Manual,
             Single,
-            Parallel,
-            Manual
+            Parallel
         }
 
         public event EventHandler<WatcherEvent> MessageRaised;
@@ -142,7 +142,7 @@ namespace ChangeTracker
             _timeStarted = DateTime.UtcNow;
         }
 
-        private void Scan(SettingsCollection sc, DirectoryInfo dInf)
+        private void Scan(FilterCollection sc, DirectoryInfo dInf)
         {
             // Check all files within the directory and subdirectories.
             foreach (var file in dInf.GetFiles("*", SearchOption.AllDirectories))
@@ -172,7 +172,7 @@ namespace ChangeTracker
             }
         }
 
-        private void ScanParallel(SettingsCollection sc, DirectoryInfo dInf)
+        private void ScanParallel(FilterCollection sc, DirectoryInfo dInf)
         {
             // Check all files within the directory and subdirectories.
             Parallel.ForEach(dInf.GetFiles("*", SearchOption.AllDirectories), (file) =>

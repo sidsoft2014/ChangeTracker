@@ -6,9 +6,9 @@ using System.Text.RegularExpressions;
 namespace ChangeTracker.Models
 {
     [Serializable]
-    public sealed class SettingsCollection : IDisposable
+    public sealed class FilterCollection : IDisposable
     {
-        public SettingsCollection()
+        public FilterCollection()
         {
             FilteredRegex = new HashSet<string>();
             FilteredDirectories = new HashSet<string>();

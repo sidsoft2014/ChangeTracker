@@ -244,6 +244,28 @@ namespace ChangeTracker.Commands
         }
     }
 
+    public sealed class AddOrSaveFilterMode : ICommand
+    {
+        private EditorViewModel _viewModel;
+
+        public AddOrSaveFilterMode(EditorViewModel viewModel)
+        {
+            _viewModel = viewModel;
+        }
+
+        public event EventHandler CanExecuteChanged;
+
+        public bool CanExecute(object parameter)
+        {
+            return true;
+        }
+
+        public void Execute(object parameter)
+        {
+            _viewModel.AddOrSaveFilterModeButton_OnClick(parameter as string);
+        }
+    }
+
     public sealed class AddFilter : ICommand
     {
         private EditorViewModel _viewModel;

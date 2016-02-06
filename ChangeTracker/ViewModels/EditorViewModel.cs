@@ -16,15 +16,18 @@ namespace ChangeTracker.ViewModels
         private ObservableCollection<string> _extensions;
         private ObservableCollection<string> _regexes;
         private ObservableCollection<string> _strings;
+        private string _mode = "web";
         private string _textBoxExtension;
         private string _textBoxTempFiles;
         private string _textBoxDirectories;
         private string _textBoxRegex;
-        private string _mode = "web";
-        private ICommand _cmdAddFilter;
-        private ICommand _cmdRemoveFilter;
+        private ICommand _cmdAddFilterString;
+        private ICommand _cmdRemoveFilterString;
         private ICommand _cmdSelectMode;
         private ICommand _cmdSaveFilters;
+        private string _selectedFilterMode;
+        private ICommand _cmdAddOrSaveFilterModeButton_OnClick;
+        private string _addSaveBtnText;
 
         public EditorViewModel()
         {
@@ -32,7 +35,7 @@ namespace ChangeTracker.ViewModels
             try
             {
                 // May as well use the method we already have to build initial lists.
-                SelectFilterMode("web");
+                SelectedFilterMode = FilterModes.Count > 0 ? FilterModes[0] : "";
             }
             finally
             {
@@ -88,7 +91,29 @@ namespace ChangeTracker.ViewModels
                 OnChanged();
             }
         }
-
+        public List<string> FilterModes
+        {
+            get
+            {
+                return Globals.FilterCollections.Keys.ToList();
+            }
+        }
+        public string SelectedFilterMode
+        {
+            get
+            {
+                return _selectedFilterMode;
+            }
+            set
+            {
+                if (value != _selectedFilterMode)
+                {
+                    _selectedFilterMode = value;
+                    SelectFilterMode(_selectedFilterMode);
+                    OnChanged();
+                }
+            }
+        }
         public string TextBoxExtension
         {
             get
@@ -149,23 +174,40 @@ namespace ChangeTracker.ViewModels
                 }
             }
         }
-
-        public ICommand cmdAddFilter
+        public string AddSaveBtnText
         {
             get
             {
-                if (_cmdAddFilter == null)
-                    _cmdAddFilter = new AddFilter(this);
-                return _cmdAddFilter;
+                if (string.IsNullOrEmpty(_addSaveBtnText))
+                    _addSaveBtnText = "New";
+                return _addSaveBtnText;
+            }
+            set
+            {
+                if(value != _addSaveBtnText)
+                {
+                    _addSaveBtnText = value;
+                    OnChanged();
+                }
             }
         }
-        public ICommand cmdRemoveFilter
+
+        public ICommand cmdAddFilterString
         {
             get
             {
-                if (_cmdRemoveFilter == null)
-                    _cmdRemoveFilter = new RemoveFilter(this);
-                return _cmdRemoveFilter;
+                if (_cmdAddFilterString == null)
+                    _cmdAddFilterString = new AddFilter(this);
+                return _cmdAddFilterString;
+            }
+        }
+        public ICommand cmdRemoveFilterString
+        {
+            get
+            {
+                if (_cmdRemoveFilterString == null)
+                    _cmdRemoveFilterString = new RemoveFilter(this);
+                return _cmdRemoveFilterString;
             }
         }
         public ICommand cmdSelectMode
@@ -186,50 +228,64 @@ namespace ChangeTracker.ViewModels
                 return _cmdSaveFilters;
             }
         }
+        public ICommand cmdAddOrSaveFilterModeButton_OnClick
+        {
+            get
+            {
+                if (_cmdAddOrSaveFilterModeButton_OnClick == null)
+                    _cmdAddOrSaveFilterModeButton_OnClick = new AddOrSaveFilterMode(this);
+                return _cmdAddOrSaveFilterModeButton_OnClick;
+            }
+        }
 
         internal bool CanSaveFilters
         {
             get
             {
-                switch (_mode)
-                {
-                    case "web":
-                        try
+                var collection = Globals.FilterCollections
+                    .FirstOrDefault(p => p.Key.ToLower() == _mode.ToLower()).Value;
+
+                if (collection == null)
+                    return false;
+
+                return !collection.FilteredDirectories.SequenceEqual(Directories)
+                                || !collection.FilteredExtensions.SequenceEqual(Extensions)
+                                || !collection.FilteredStrings.SequenceEqual(Strings);                
+            }
+        }
+
+        internal void AddOrSaveFilterModeButton_OnClick(string v)
+        {
+            if (string.IsNullOrEmpty(v))
+                return;
+
+            switch (AddSaveBtnText.ToLower())
+            {
+                case "new":
+                    AddSaveBtnText = "Save";
+                    break;
+                default:
+                case "save":
+                    if (SelectedFilterMode != null)
+                    {
+                        foreach (var key in Globals.FilterCollections.Keys)
                         {
-                            return !Globals.WebSettings.FilteredDirectories.SequenceEqual(Directories)
-                                || !Globals.WebSettings.FilteredExtensions.SequenceEqual(Extensions)
-                                || !Globals.WebSettings.FilteredStrings.SequenceEqual(Strings);
+                            if (key.ToLower() == SelectedFilterMode.ToLower())
+                                return;
                         }
-                        catch
-                        {
-                            break;
-                        }
-                    case "general":
-                        try
-                        {
-                            return !Globals.GeneralSettings.FilteredDirectories.SequenceEqual(Directories)
-                                || !Globals.GeneralSettings.FilteredExtensions.SequenceEqual(Extensions)
-                                || !Globals.GeneralSettings.FilteredStrings.SequenceEqual(Strings);
-                        }
-                        catch
-                        {
-                            break;
-                        }
-                    case "code":
-                        try
-                        {
-                            return !Globals.CodeSettings.FilteredDirectories.SequenceEqual(Directories)
-                                || !Globals.CodeSettings.FilteredExtensions.SequenceEqual(Extensions)
-                                || !Globals.CodeSettings.FilteredStrings.SequenceEqual(Strings);
-                        }
-                        catch
-                        {
-                            break;
-                        }
-                    default:
-                        break;
-                }
-                return false;
+                        Globals.FilterCollections
+                            .Add(
+                            SelectedFilterMode,
+                            new Models.FilterCollection
+                            {
+                                Name = SelectedFilterMode
+                            });
+
+                        SaveFilters();
+                        OnChanged("FilterModes");
+                    }
+                    AddSaveBtnText = "New";
+                    break;
             }
         }
 
@@ -376,100 +432,61 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        internal override void SelectFilterMode(string parameter)
-        {
-            // If for some reason we have a null parameter we may aswell set a value to prevent exceptions later.
-            if (parameter == null)
-                parameter = "web";
-
-            _mode = parameter.ToLower();
-            switch (_mode)
-            {
-                case "web":
-                    Extensions = new ObservableCollection<string>(Globals.WebSettings.FilteredExtensions);
-                    Strings = new ObservableCollection<string>(Globals.WebSettings.FilteredStrings);
-                    Directories = new ObservableCollection<string>(Globals.WebSettings.FilteredDirectories);
-                    Regexes = new ObservableCollection<string>(Globals.WebSettings.FilteredRegex);
-                    break;
-                case "code":
-                    Extensions = new ObservableCollection<string>(Globals.CodeSettings.FilteredExtensions);
-                    Strings = new ObservableCollection<string>(Globals.CodeSettings.FilteredStrings);
-                    Directories = new ObservableCollection<string>(Globals.CodeSettings.FilteredDirectories);
-                    Regexes = new ObservableCollection<string>(Globals.CodeSettings.FilteredRegex);
-                    break;
-                case "general":
-                default:
-                    Extensions = new ObservableCollection<string>(Globals.GeneralSettings.FilteredExtensions);
-                    Strings = new ObservableCollection<string>(Globals.GeneralSettings.FilteredStrings);
-                    Directories = new ObservableCollection<string>(Globals.GeneralSettings.FilteredDirectories);
-                    Regexes = new ObservableCollection<string>(Globals.GeneralSettings.FilteredRegex);
-                    break;
-            }
-        }
-
         internal void SaveFilters()
         {
             if (string.IsNullOrEmpty(_mode))
                 return;
 
-            switch (_mode)
+            var collection = Globals.FilterCollections
+                .FirstOrDefault(p => p.Key.ToLower() == _mode.ToLower()).Value;
+
+            if (collection == null)
+                return;
+
+            collection.FilteredDirectories = new HashSet<string>(Directories);
+            collection.FilteredExtensions = new HashSet<string>(Extensions);
+            collection.FilteredStrings = new HashSet<string>(Strings);
+            collection.FilteredRegex = new HashSet<string>(Regexes);
+
+            string json = JsonConvert.SerializeObject(Globals.FilterCollections);
+            File.WriteAllText(Globals.SavedSettingsCollections, json);
+        }
+
+        internal override void SelectFilterMode(string parameter)
+        {
+            if (parameter == null)
+                return;
+
+            _mode = parameter.ToLower();
+
+            var collection = Globals.FilterCollections
+                .FirstOrDefault(p => p.Key.ToLower() == _mode).Value;
+
+            if (collection == null)
             {
-                case "web":
-                    {
-                        if (Globals.WebSettings == null)
-                            Globals.WebSettings = new Models.SettingsCollection { Name = "Web" };
-
-                        Globals.WebSettings.FilteredDirectories = new HashSet<string>(Directories);
-                        Globals.WebSettings.FilteredExtensions = new HashSet<string>(Extensions);
-                        Globals.WebSettings.FilteredStrings = new HashSet<string>(Strings);
-                        Globals.WebSettings.FilteredRegex = new HashSet<string>(Regexes);
-
-                        string json = JsonConvert.SerializeObject(Globals.WebSettings);
-                        File.WriteAllText(Globals.SavedWebSettings, json);
-                        break;
-                    }
-                case "code":
-                    {
-                        if (Globals.CodeSettings == null)
-                            Globals.CodeSettings = new Models.SettingsCollection { Name = "Code" };
-
-                        Globals.CodeSettings.FilteredDirectories = new HashSet<string>(Directories);
-                        Globals.CodeSettings.FilteredExtensions = new HashSet<string>(Extensions);
-                        Globals.CodeSettings.FilteredStrings = new HashSet<string>(Strings);
-                        Globals.CodeSettings.FilteredRegex = new HashSet<string>(Regexes);
-
-                        string json = JsonConvert.SerializeObject(Globals.CodeSettings);
-                        File.WriteAllText(Globals.SavedCodeSettings, json);
-                        break;
-                    }
-                case "general":
-                    {
-                        if (Globals.GeneralSettings == null)
-                            Globals.GeneralSettings = new Models.SettingsCollection { Name = "General" };
-
-                        Globals.GeneralSettings.FilteredDirectories = new HashSet<string>(Directories);
-                        Globals.GeneralSettings.FilteredExtensions = new HashSet<string>(Extensions);
-                        Globals.GeneralSettings.FilteredStrings = new HashSet<string>(Strings);
-                        Globals.GeneralSettings.FilteredRegex = new HashSet<string>(Regexes);
-
-                        string json = JsonConvert.SerializeObject(Globals.GeneralSettings);
-                        File.WriteAllText(Globals.SavedGeneralSettings, json);
-                        break;
-                    }
-                default:
-                    break;
+                Extensions = new ObservableCollection<string>();
+                Strings = new ObservableCollection<string>();
+                Directories = new ObservableCollection<string>();
+                Regexes = new ObservableCollection<string>();
+            }
+            else
+            {
+                Extensions = new ObservableCollection<string>(collection.FilteredExtensions);
+                Strings = new ObservableCollection<string>(collection.FilteredStrings);
+                Directories = new ObservableCollection<string>(collection.FilteredDirectories);
+                Regexes = new ObservableCollection<string>(collection.FilteredRegex);
             }
         }
 
         protected override void Dispose(bool disposing)
         {
-            if(disposing)
+            if (disposing)
             {
                 _extensions = null;
                 _directories = null;
                 _strings = null;
-                _cmdAddFilter = null;
-                _cmdRemoveFilter = null;
+                _cmdAddFilterString = null;
+                _cmdRemoveFilterString = null;
                 _cmdSaveFilters = null;
                 _cmdSelectMode = null;
             }

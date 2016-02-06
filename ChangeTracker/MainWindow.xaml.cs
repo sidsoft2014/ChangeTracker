@@ -14,8 +14,10 @@ namespace ChangeTracker
 
         public MainWindow()
         {
+            if (!Globals.Init())
+                return;
+
             InitializeComponent();
-            Globals.Init();
             _vm = this.DataContext as MainViewModel;
         }
 

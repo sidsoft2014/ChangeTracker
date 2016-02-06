@@ -16,28 +16,25 @@ namespace ChangeTracker
     {
         public static readonly string SettingsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings");
         public static readonly string HistoryFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "History");
-        public static readonly string SavedWebSettings = Path.Combine(SettingsFolder, "web.json");
-        public static readonly string SavedCodeSettings = Path.Combine(SettingsFolder, "code.json");
-        public static readonly string SavedGeneralSettings = Path.Combine(SettingsFolder, "general.json");
+        public static readonly string SavedSettingsCollections = Path.Combine(SettingsFolder, "collections.json");
 
-        public static SettingsCollection WebSettings = new SettingsCollection { Name = "Web" };
-        public static SettingsCollection CodeSettings = new SettingsCollection { Name = "Code" };
-        public static SettingsCollection GeneralSettings = new SettingsCollection { Name = "General" };
+        public static Dictionary<string, FilterCollection> FilterCollections;
 
         public static List<HistoryRecord> History;
 
-        public static SettingsCollection SelectedFilter { get; set; }
+        public static FilterCollection SelectedFilter { get; set; }
 
-        public static void Init()
+        public static bool Init()
         {
             if (!Directory.Exists(SettingsFolder))
                 Directory.CreateDirectory(SettingsFolder);
 
-            InitGeneralMode();
-            InitWebMode();
+            InitSettingsCollections();
             InitHistory();
 
-            SelectedFilter = WebSettings;
+            SelectedFilter = FilterCollections.FirstOrDefault().Value;
+
+            return true;
         }
 
         public static void XmlToHistory(string path, out List<HistoryRecord> output)
@@ -70,7 +67,7 @@ namespace ChangeTracker
         /// <returns></returns>
         public static bool OnClose()
         {
-            if (History.Count > 0)
+            if (History != null && History.Count > 0)
             {
                 DateTime now = DateTime.Now;
                 string fileName = string.Format("{0}-{1}-{2}.xml", now.Year, now.Month, now.Day);
@@ -87,27 +84,28 @@ namespace ChangeTracker
             return true;
         }
 
-        private static void InitGeneralMode()
+        private static void InitSettingsCollections()
         {
-            if (File.Exists(SavedGeneralSettings))
+            FilterCollections = new Dictionary<string, FilterCollection>();
+
+            if (File.Exists(SavedSettingsCollections))
             {
-                string json = File.ReadAllText(SavedGeneralSettings);
+                string json = File.ReadAllText(SavedSettingsCollections);
                 try
                 {
-                    GeneralSettings = JsonConvert.DeserializeObject<SettingsCollection>(json);
+                    FilterCollections = JsonConvert.DeserializeObject<Dictionary<string, FilterCollection>>(json);
+                    return;
                 }
                 catch (Exception ex)
                 {
-#if DEBUG
-                    Console.WriteLine(ex.Message);
-#endif
-                    PopulateBaseGeneralFilters();
+
                 }
             }
-            else
-            {
-                PopulateBaseGeneralFilters();
-            }
+
+            FilterCollections.Add("Code", BaseCodeFilters());
+            FilterCollections.Add("General", BaseGeneralFilters());
+            FilterCollections.Add("Web", BaseWebFilters());
+
         }
 
         private static void InitHistory()
@@ -141,35 +139,28 @@ namespace ChangeTracker
             }
         }
 
-        private static void InitWebMode()
+        private static FilterCollection BaseGeneralFilters()
         {
-            if (File.Exists(SavedWebSettings))
-            {
-                string json = File.ReadAllText(SavedWebSettings);
-                try
-                {
-                    WebSettings = JsonConvert.DeserializeObject<SettingsCollection>(json);
-                }
-                catch (Exception ex)
-                {
-#if DEBUG
-                    Console.WriteLine(ex.Message);
-#endif
-                    PopulateBaseWebFilters();
-                }
-            }
-            else
-            {
-                PopulateBaseWebFilters();
-            }
+            FilterCollection generalSettings = new FilterCollection { Name = "General" };
+
+            if (generalSettings == null)
+                generalSettings = new FilterCollection { Name = "General" };
+
+            generalSettings.FilteredDirectories = new HashSet<string>();
+            generalSettings.FilteredExtensions = new HashSet<string>();
+            generalSettings.FilteredStrings = new HashSet<string>();
+            generalSettings.FilteredRegex = new HashSet<string>();
+
+            return generalSettings;
         }
 
-        private static void PopulateBaseCodeFilters()
+        private static FilterCollection BaseCodeFilters()
         {
-            if (WebSettings == null)
-                WebSettings = new SettingsCollection { Name = "Web" };
+            FilterCollection codeSettings = new FilterCollection { Name = "Code" };
+            if (codeSettings == null)
+                codeSettings = new FilterCollection { Name = "Web" };
 
-            CodeSettings.FilteredExtensions = new HashSet<string>
+            codeSettings.FilteredExtensions = new HashSet<string>
                 {
                     ".cs",
                     ".vb",
@@ -182,36 +173,28 @@ namespace ChangeTracker
                     ".temp",
                     ".tmp"
                 };
-            CodeSettings.FilteredStrings = new HashSet<string>
+            codeSettings.FilteredStrings = new HashSet<string>
                 {
                     ".dll.config"
                 };
-            CodeSettings.FilteredDirectories = new HashSet<string>
+            codeSettings.FilteredDirectories = new HashSet<string>
                 {
                     "obj",
                     "debug",
                     "release"
                 };
-            WebSettings.FilteredRegex = new HashSet<string>();
+            codeSettings.FilteredRegex = new HashSet<string>();
+
+            return codeSettings;
         }
 
-        private static void PopulateBaseGeneralFilters()
+        private static FilterCollection BaseWebFilters()
         {
-            if (GeneralSettings == null)
-                GeneralSettings = new SettingsCollection { Name = "General" };
+            FilterCollection webSettings = new FilterCollection { Name = "Web" };
+            if (webSettings == null)
+                webSettings = new FilterCollection { Name = "Web" };
 
-            GeneralSettings.FilteredDirectories = new HashSet<string>();
-            GeneralSettings.FilteredExtensions = new HashSet<string>();
-            GeneralSettings.FilteredStrings = new HashSet<string>();
-            GeneralSettings.FilteredRegex = new HashSet<string>();
-        }
-
-        private static void PopulateBaseWebFilters()
-        {
-            if (WebSettings == null)
-                WebSettings = new SettingsCollection { Name = "Web" };
-
-            WebSettings.FilteredExtensions = new HashSet<string>
+            webSettings.FilteredExtensions = new HashSet<string>
                 {
                     ".pdb",
                     ".sln",
@@ -222,17 +205,19 @@ namespace ChangeTracker
                     ".temp",
                     ".tmp"
                 };
-            WebSettings.FilteredStrings = new HashSet<string>
+            webSettings.FilteredStrings = new HashSet<string>
                 {
                     ".dll.config"
                 };
-            WebSettings.FilteredDirectories = new HashSet<string>
+            webSettings.FilteredDirectories = new HashSet<string>
                 {
                     "obj",
                     "debug",
                     "release"
                 };
-            WebSettings.FilteredRegex = new HashSet<string>();
+            webSettings.FilteredRegex = new HashSet<string>();
+
+            return webSettings;
         }
     }
 }
