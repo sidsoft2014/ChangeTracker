@@ -37,30 +37,6 @@ namespace ChangeTracker
             return true;
         }
 
-        public static void XmlToHistory(string path, out List<HistoryRecord> output)
-        {
-            if (!string.IsNullOrEmpty(path))
-            {
-                using (XmlReader reader = XmlReader.Create(path))
-                {
-                    XmlSerializer serialiser = new XmlSerializer(typeof(List<HistoryRecord>));
-
-                    if (serialiser.CanDeserialize(reader))
-                    {
-                        var list = serialiser.Deserialize(reader) as List<HistoryRecord>;
-                        if (list != null)
-                        {
-                            output = list;
-                            return;
-                        }
-                    }
-
-                }
-            }
-
-            output = new List<HistoryRecord>();
-        }
-
         /// <summary>
         /// Method that needs to be called on application close in order to save history.
         /// </summary>
@@ -82,6 +58,29 @@ namespace ChangeTracker
             }
 
             return true;
+        }
+
+        public static void XmlToHistory(string path, out List<HistoryRecord> output)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                using (XmlReader reader = XmlReader.Create(path))
+                {
+                    XmlSerializer serialiser = new XmlSerializer(typeof(List<HistoryRecord>));
+
+                    if (serialiser.CanDeserialize(reader))
+                    {
+                        var list = serialiser.Deserialize(reader) as List<HistoryRecord>;
+                        if (list != null)
+                        {
+                            output = list;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            output = new List<HistoryRecord>();
         }
 
         private static void InitSettingsCollections()

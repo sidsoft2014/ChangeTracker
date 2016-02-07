@@ -266,7 +266,7 @@ namespace ChangeTracker.ViewModels
                     break;
                 default:
                 case "save":
-                    if (SelectedFilterMode != null)
+                    if (!string.IsNullOrEmpty(SelectedFilterMode))
                     {
                         foreach (var key in Globals.FilterCollections.Keys)
                         {

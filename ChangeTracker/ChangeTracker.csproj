@@ -104,6 +104,8 @@
       <DependentUpon>FilterEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="Globals.cs" />
+    <Compile Include="Helpers\FileHelpers.cs" />
+    <Compile Include="Helpers\FilterCollectionExtensions.cs" />
     <Compile Include="HistoricChangesWindow.xaml.cs">
       <DependentUpon>HistoricChangesWindow.xaml</DependentUpon>
     </Compile>
@@ -113,10 +115,7 @@
     <Compile Include="Models\ChangedFile.cs" />
     <Compile Include="Models\FolderExclude.cs" />
     <Compile Include="Models\HistoryRecord.cs" />
-    <Compile Include="Models\SettingsCollection.cs" />
-    <Compile Include="TextInputPopUp.xaml.cs">
-      <DependentUpon>TextInputPopUp.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="Models\FilterCollection.cs" />
     <Compile Include="ViewModels\EditorViewModel.cs" />
     <Compile Include="ViewModels\HistoryViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
@@ -146,10 +145,6 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="TextInputPopUp.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">

@@ -1,4 +1,5 @@
 ﻿using ChangeTracker.Commands;
+using ChangeTracker.Helpers;
 using ChangeTracker.Models;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,7 @@ namespace ChangeTracker.ViewModels
         private string _status = "Idle";
         private readonly string[] _normalStates = { "Idle", "Watching" };
         private Watcher watcher;
+        private FileHelpers fileHelper;
         private FilterEditor _filterEditorWindow;
         private HistoryWindow _jobHistoryWindow;
         private HistoryRecord _currentRecord;
@@ -60,6 +62,10 @@ namespace ChangeTracker.ViewModels
             try
             {
                 App.Current.MainWindow.Closing += MainWindow_Closing;
+
+                fileHelper = FileHelpers.Instance;
+                fileHelper.MessageRaised += FileHelper_MessageRaised;
+
                 watcher = Watcher.Instance(this);
                 watcher.MessageRaised += Watcher_MessageRaised;
                 watcher.Run();
@@ -494,124 +500,6 @@ namespace ChangeTracker.ViewModels
         }
 
         /// <summary>
-        /// Save the list of changed files as a text file.
-        /// </summary>
-        internal void SaveList()
-        {
-            using (WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog())
-            {
-                if (!string.IsNullOrEmpty(Properties.Settings.Default.LastCopied))
-                {
-                    if (Directory.Exists(Properties.Settings.Default.LastCopied))
-                        fbd.SelectedPath = Properties.Settings.Default.LastCopied;
-                }
-
-                fbd.ShowNewFolderButton = true;
-                var dr = fbd.ShowDialog();
-
-                switch (dr)
-                {
-                    case WF.DialogResult.OK:
-                    case WF.DialogResult.Yes:
-                        string fileName = WatchedFolder.Split('\\').Last() + ".txt";
-                        string filePath = Path.Combine(fbd.SelectedPath, fileName);
-                        File.Create(filePath).Dispose();
-                        File.AppendAllLines(filePath, ChangedFiles.Select(p => p.FullPath));
-
-                        ResetAndLaunch("Files List Created", fbd.SelectedPath);
-
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Copy the changed files to a selected folder.
-        /// </summary>
-        internal void CopyFiles()
-        {
-            List<string> errorList = new List<string>();
-            WF.FolderBrowserDialog fbd = new WF.FolderBrowserDialog();
-
-            try
-            {
-                if (!string.IsNullOrEmpty(Properties.Settings.Default.LastCopied))
-                {
-                    if (Directory.Exists(Properties.Settings.Default.LastCopied))
-                        fbd.SelectedPath = Properties.Settings.Default.LastCopied;
-                }
-
-                fbd.ShowNewFolderButton = true;
-                var dr = fbd.ShowDialog();
-
-                switch (dr)
-                {
-                    case WF.DialogResult.OK:
-                    case WF.DialogResult.Yes:
-                        string folder = fbd.SelectedPath;
-                        foreach (var file in ChangedFiles)
-                        {
-                            try
-                            {
-                                if (!file.Exists)
-                                {
-                                    string errorReason = "File does not exist";
-                                    errorList.Add(Environment.NewLine);
-                                    errorList.Add("Could not copy file: " + file.FullPath);
-                                    errorList.Add("Reason: " + errorReason);
-                                    errorList.Add(Environment.NewLine);
-                                    continue;
-                                }
-                                string directory = file.File.Directory.FullName.Replace(WatchedFolder, "").TrimStart('\\');
-                                string fileName = file.Name;
-                                string destination = Path.Combine(@"\\?\", folder, directory);
-
-                                CreateDirectoryStructure(new DirectoryInfo(destination));
-
-                                destination = Path.Combine(destination, fileName);
-
-                                file.Copy(destination, true);
-                            }
-                            catch (Exception ex)
-                            {
-                                SetTemporaryStatusMessage(ex.Message);
-
-                                errorList.Add(Environment.NewLine);
-                                errorList.Add("EXCEPTION: " + file.FullPath);
-                                errorList.Add("Reason: " + ex.Message);
-                                errorList.Add(Environment.NewLine);
-                            }
-                        }
-
-                        if (errorList.Count > 0)
-                        {
-                            try
-                            {
-                                string errorPath = Path.Combine(folder, "errors.txt");
-                                System.IO.File.WriteAllLines(errorPath, errorList);
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-
-                        ResetAndLaunch("Files Copied", folder);
-
-                        break;
-                    default:
-                        break;
-                }
-            }
-            finally
-            {
-                fbd.Dispose();
-            }
-        }
-
-        /// <summary>
         /// Add a new fileinfo to the list of changed files.
         /// </summary>
         /// <param name="change"></param>
@@ -650,6 +538,30 @@ namespace ChangeTracker.ViewModels
                 AddChangesDelegate del = new AddChangesDelegate(AddNewChangeSet);
                 Application.Current.Dispatcher.Invoke(del, new object[] { changes });
             }
+        }
+
+        internal void CopyFiles()
+        {
+            if (string.IsNullOrEmpty(WatchedFolder)
+                || ChangedFiles == null
+                || ChangedFiles.Count == 0)
+                return;
+
+            string destination;
+            fileHelper.CopyFiles(WatchedFolder, ChangedFiles, out destination);
+            ResetAndLaunch("Files Copied", destination);
+        }
+
+        internal void SaveList()
+        {
+            if (string.IsNullOrEmpty(WatchedFolder)
+                || ChangedFiles == null
+                || ChangedFiles.Count == 0)
+                return;
+
+            string destination;
+            fileHelper.SaveList(WatchedFolder, ChangedFiles, out destination);
+            ResetAndLaunch("File List Saved", destination);
         }
 
         internal void ClearList(bool affirmed = false)
@@ -709,7 +621,7 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        internal void ViewHistory()
+        internal void LaunchJobHistoryWindow()
         {
             if (!_isHistoryLaunched)
             {
@@ -743,19 +655,17 @@ namespace ChangeTracker.ViewModels
 
                     if (watcher != null)
                         watcher.Dispose();
-
-                    _changedFiles = null;
-
-                    _subFolders = null;
+                    if (fileHelper != null)
+                        fileHelper.Dispose();
                 }
+
+                _changedFiles = null;
+                _customFilters = null;
+                _scanModes = null;
+                _subFolders = null;
 
                 base.Dispose(disposing);
             }
-        }
-
-        private void Watcher_MessageRaised(object sender, WatcherEvent e)
-        {
-            SetTemporaryStatusMessage(e.Message);
         }
 
         private void SetTemporaryStatusMessage(string message)
@@ -791,13 +701,11 @@ namespace ChangeTracker.ViewModels
             }
         }
 
-        private void CreateDirectoryStructure(DirectoryInfo directory)
-        {
-            if (!directory.Parent.Exists)
-                CreateDirectoryStructure(directory.Parent);
-            directory.Create();
-        }
-
+        /// <summary>
+        /// Clears current file list and opens destination folder.
+        /// </summary>
+        /// <param name="result"></param>
+        /// <param name="destination"></param>
         private void ResetAndLaunch(string result, string destination)
         {
             Properties.Settings.Default.LastCopied = destination;
@@ -837,6 +745,16 @@ namespace ChangeTracker.ViewModels
             }
             _currentRecord = null;
             SetTemporaryStatusMessage("Job ended.");
+        }
+
+        private void FileHelper_MessageRaised(object sender, FileHelperMessageEvent e)
+        {
+            SetTemporaryStatusMessage(e.Message);
+        }
+
+        private void Watcher_MessageRaised(object sender, WatcherEvent e)
+        {
+            SetTemporaryStatusMessage(e.Message);
         }
 
         private void Folder_PropertyChanged(object sender, PropertyChangedEventArgs e)
