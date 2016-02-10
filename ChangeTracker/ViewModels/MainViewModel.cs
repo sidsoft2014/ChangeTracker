@@ -11,8 +11,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using DirectoryInfo = Pri.LongPath.DirectoryInfo;
-using File = Pri.LongPath.File;
+//using DirectoryInfo = Pri.LongPath.DirectoryInfo;
 using WF = System.Windows.Forms;
 
 namespace ChangeTracker.ViewModels
@@ -485,16 +484,11 @@ namespace ChangeTracker.ViewModels
         internal void GetChangesManual()
         {
             var started = watcher.GetTimeStarted;
-
-            DirectoryInfo dInf = new DirectoryInfo(WatchedFolder);
-            foreach (var fileInfo in dInf.GetFiles("*", SearchOption.AllDirectories))
+            foreach (var file in fileHelper.GetFileChangesSince(started, WatchedFolder))
             {
-                if (fileInfo.CreationTimeUtc >= started || fileInfo.LastWriteTimeUtc >= started)
+                if (Globals.SelectedFilter.FilePassesFilter(file))
                 {
-                    if (Globals.SelectedFilter.FilePassesFilter(fileInfo))
-                    {
-                        AddNewChange(fileInfo);
-                    }
+                    AddNewChange(file);
                 }
             }
         }
@@ -683,7 +677,6 @@ namespace ChangeTracker.ViewModels
                     if (!_normalStates.Contains(message))
                     {
                         System.Timers.Timer timer = new System.Timers.Timer(2000);
-
                         timer.AutoReset = false;
                         timer.Elapsed += (s, e) =>
                         {
@@ -708,9 +701,6 @@ namespace ChangeTracker.ViewModels
         /// <param name="destination"></param>
         private void ResetAndLaunch(string result, string destination)
         {
-            Properties.Settings.Default.LastCopied = destination;
-            Properties.Settings.Default.Save();
-
             if (_currentRecord != null)
                 LogJobEnd();
 

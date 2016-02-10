@@ -3,8 +3,6 @@ using Pri.LongPath;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WF = System.Windows.Forms;
 
 namespace ChangeTracker.Helpers
@@ -100,7 +98,28 @@ namespace ChangeTracker.Helpers
                 {
                     case WF.DialogResult.OK:
                     case WF.DialogResult.Yes:
-                        string folder = fbd.SelectedPath;
+                        // Save selected folder as most recent directory.
+                        Properties.Settings.Default.LastCopied = fbd.SelectedPath;
+                        Properties.Settings.Default.Save();
+
+                        // Create folder using reverse date format for final folder.
+                        var now = DateTime.Now;
+                        destination = Path.Combine(fbd.SelectedPath,
+                            string.Format("{0}-{1}-{2}",
+                            now.Year,
+                            now.Month < 10 ? "0" + now.Month.ToString() : now.Month.ToString(),
+                            now.Day < 10 ? "0" + now.Day.ToString() : now.Day.ToString()));
+
+                        // Check if folder already exists and if so append an index number.
+                        int idx = 2;
+                        string checkName = destination;
+                        while (Directory.Exists(checkName))
+                        {
+                            checkName = string.Format("{0}-{1}", destination, idx++);
+                        }
+                        destination = checkName;
+
+                        // Copy files.
                         foreach (var file in fileList)
                         {
                             try
@@ -115,14 +134,11 @@ namespace ChangeTracker.Helpers
                                     continue;
                                 }
                                 string directory = file.File.Directory.FullName.Replace(baseFolder, "").TrimStart('\\');
-                                string fileName = file.Name;
-                                destination = Path.Combine(@"\\?\", folder, directory);
+                                string copyDir = Path.Combine(@"\\?\", destination, directory);
 
-                                CreateDirectoryStructure(new DirectoryInfo(destination));
+                                CreateDirectoryStructure(new DirectoryInfo(copyDir));
 
-                                destination = Path.Combine(destination, fileName);
-
-                                file.Copy(destination, true);
+                                file.Copy(Path.Combine(copyDir, file.Name), true);
                             }
                             catch (Exception ex)
                             {
@@ -139,7 +155,7 @@ namespace ChangeTracker.Helpers
                         {
                             try
                             {
-                                string errorPath = Path.Combine(folder, "errors.txt");
+                                string errorPath = Path.Combine(destination, "errors.txt");
                                 System.IO.File.WriteAllLines(errorPath, errorList);
                             }
                             catch
@@ -159,7 +175,19 @@ namespace ChangeTracker.Helpers
             }
         }
 
-        private void CreateDirectoryStructure(DirectoryInfo directory)
+        public IEnumerable<FileInfo> GetFileChangesSince(DateTime time, string directory)
+        {
+            Pri.LongPath.DirectoryInfo dInf = new Pri.LongPath.DirectoryInfo(directory);
+            foreach (var fileInfo in dInf.GetFiles("*", System.IO.SearchOption.AllDirectories))
+            {
+                if (fileInfo.CreationTimeUtc >= time || fileInfo.LastWriteTimeUtc >= time)
+                {
+                    yield return fileInfo;
+                }
+            }
+        }
+
+        private void CreateDirectoryStructure(Pri.LongPath.DirectoryInfo directory)
         {
             if (!directory.Parent.Exists)
                 CreateDirectoryStructure(directory.Parent);
@@ -169,7 +197,7 @@ namespace ChangeTracker.Helpers
         private void OnMessageRaised(string message)
         {
             EventHandler<FileHelperMessageEvent> handler = MessageRaised;
-            if(handler != null)
+            if (handler != null)
             {
                 handler(this, new FileHelperMessageEvent(message));
             }

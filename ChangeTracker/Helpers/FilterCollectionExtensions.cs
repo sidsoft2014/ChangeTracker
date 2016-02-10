@@ -53,5 +53,11 @@ namespace ChangeTracker.Helpers
 
             return true;
         }
+        public static bool FilePassesFilter(this FilterCollection collection, System.IO.FileInfo file)
+        {
+
+
+            return true;
+        }
     }
 }

@@ -54,10 +54,7 @@ namespace ChangeTracker
         public event EventHandler<WatcherEvent> MessageRaised;
 
         public ScanMode ScaningMode { get; set; }
-
-        /*
-            TODO: Add cancelation token.
-        */
+        
         public void Run()
         {
             TaskFactory factory = new TaskFactory(_token);
