@@ -166,6 +166,7 @@ namespace ChangeTracker.Helpers
 
                         break;
                     case WF.DialogResult.No:
+                    case WF.DialogResult.Cancel:
                     default:
                         break;
                 }
