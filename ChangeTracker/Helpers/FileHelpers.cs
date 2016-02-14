@@ -165,6 +165,7 @@ namespace ChangeTracker.Helpers
                         }
 
                         break;
+                    case WF.DialogResult.No:
                     default:
                         break;
                 }
